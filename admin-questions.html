@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Survey questions — Admin</title>
+  <link rel="icon" href="icons/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/admin-questions.css" />
+  <script>
+    (function () {
+      try {
+        var raw = localStorage.getItem('survey_app_settings');
+        var settings = raw ? JSON.parse(raw) : {};
+        var theme = settings.theme === 'dark' ? 'dark' : 'light';
+        var scale = typeof settings.spacingScale === 'number' ? settings.spacingScale : 1;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.style.setProperty('--space-unit', 8 * scale + 'px');
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <header>
+    <nav class="site-nav" aria-label="Admin navigation">
+      <a href="admin-surveys.html">Surveys</a>
+      <a href="survey.html">View public surveys</a>
+    </nav>
+  </header>
+
+  <main class="page">
+    <p class="breadcrumb">
+      <a href="admin-surveys.html">Surveys</a> / <span id="survey-name-crumb">…</span>
+    </p>
+
+    <!-- Survey details -->
+    <section aria-labelledby="details-heading" id="survey-details">
+      <h1 id="details-heading" class="visually-hidden">Survey details</h1>
+      <!--
+        Filled by renderSurveyDetails(). This block is inherently
+        data-driven (name, description, created date, live counts)
+        so it stays JS-rendered rather than static markup.
+      -->
+      <div id="survey-details-body"></div>
+    </section>
+
+    <div class="page-header">
+      <h2>Questions</h2>
+      <div class="cell-actions">
+        <button type="button" class="btn" id="preview-btn">
+          <svg class="icon" aria-hidden="true"><use href="icons/icons.svg#eye"></use></svg>
+          Preview
+        </button>
+        <button type="button" class="btn btn-primary" id="new-question-btn">
+          <svg class="icon" aria-hidden="true"><use href="icons/icons.svg#plus"></use></svg>
+          New question
+        </button>
+      </div>
+    </div>
+
+    <p class="form-banner-error" id="list-error" hidden></p>
+
+    <section aria-labelledby="questions-heading">
+      <h3 id="questions-heading" class="visually-hidden">Question list</h3>
+
+      <!--
+        Static table shell: headers never change, only the row
+        count and row content do. JS only ever touches
+        #question-table-body (rows), #question-table-caption (count
+        text), and toggles `hidden` between the table and the
+        empty-state message.
+      -->
+      <div class="table-wrap">
+        <table class="question-table" id="question-table" hidden>
+          <caption id="question-table-caption"></caption>
+          <thead>
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Prompt</th>
+              <th scope="col">Type</th>
+              <th scope="col">Required</th>
+              <th scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="question-table-body"></tbody>
+        </table>
+        <p class="empty-state" id="question-empty-state" hidden>
+          No questions yet. Add one to start building this survey.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Add / edit question dialog -->
+  <dialog id="question-dialog" aria-labelledby="question-dialog-title">
+    <div class="dialog-body">
+      <h2 id="question-dialog-title">New question</h2>
+      <p class="form-banner-error" id="question-form-error" hidden></p>
+      <form id="question-form" class="form" novalidate>
+        <input type="hidden" id="question-id" value="" />
+
+        <div>
+          <label for="question-name"><span>Question name</span></label>
+          <input type="text" id="question-name" class="mono" required pattern="[a-z0-9_]+"
+                 title="Lowercase letters, numbers, and underscores only" />
+          <p class="field-hint">Machine identifier, e.g. full_name. Lowercase and underscores.</p>
+        </div>
+
+        <div>
+          <label for="question-type"><span>Type</span></label>
+          <!--
+            Options are populated from RenderInput.QUESTION_TYPES in
+            admin-questions.js. That list also drives hasRange /
+            hasOptions / hasFileConfig for the config panel below,
+            so it stays a single source of truth in JS rather than
+            being duplicated here in the HTML.
+          -->
+          <select id="question-type"></select>
+          <p class="field-hint" id="type-locked-hint" hidden>Type cannot be changed after creation.</p>
+        </div>
+
+        <div>
+          <label for="question-prompt"><span>Prompt</span></label>
+          <input type="text" id="question-prompt" required />
+        </div>
+
+        <div>
+          <label for="question-description"><span>Description (optional)</span></label>
+          <input type="text" id="question-description" />
+        </div>
+
+        <div class="checkbox-field">
+          <input type="checkbox" id="question-required" />
+          <label for="question-required">Required</label>
+        </div>
+
+        <!--
+          Filled by renderConfigPanel() — its fields genuinely differ
+          per question type (range needs min/max/step, choice needs
+          an options editor, file needs format/size), so it stays
+          JS-rendered.
+        -->
+        <div id="question-config-panel"></div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="question-save-btn">Create question</button>
+          <button type="button" class="btn" data-close-dialog="question-dialog">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- Delete confirmation dialog -->
+  <dialog id="confirm-dialog" aria-labelledby="confirm-dialog-title">
+    <div class="dialog-body">
+      <h2 id="confirm-dialog-title">Delete question</h2>
+      <p data-confirm-message>Are you sure?</p>
+      <div class="form-actions">
+        <button type="button" class="btn btn-danger" data-confirm-accept>Delete</button>
+        <button type="button" class="btn" data-close-dialog="confirm-dialog">Cancel</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Preview dialog: renders the quiz as the end user would see it -->
+  <dialog id="preview-dialog" class="dialog-wide" aria-labelledby="preview-dialog-title">
+    <div class="dialog-body">
+      <h2 id="preview-dialog-title">Preview</h2>
+      <p class="field-hint">This is a read-only preview of how respondents will see this survey. Submitting is disabled.</p>
+      <!--
+        Filled per-open from the survey's current questions, so it
+        stays JS-rendered — same reasoning as the config panel.
+      -->
+      <form id="preview-form" class="form"></form>
+      <div class="form-actions">
+        <button type="button" class="btn" data-close-dialog="preview-dialog">Close</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="js/utils.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/dialog.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/render-input.js"></script>
+  <script src="js/admin-questions.js"></script>
+</body>
+</html>

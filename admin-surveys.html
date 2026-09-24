@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Surveys — Admin</title>
+  <link rel="icon" href="icons/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/admin-surveys.css" />
+  <script>
+    (function () {
+      try {
+        var raw = localStorage.getItem('survey_app_settings');
+        var settings = raw ? JSON.parse(raw) : {};
+        var theme = settings.theme === 'dark' ? 'dark' : 'light';
+        var scale = typeof settings.spacingScale === 'number' ? settings.spacingScale : 1;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.style.setProperty('--space-unit', 8 * scale + 'px');
+      } catch (e) { }
+    })();
+  </script>
+</head>
+
+<body>
+  <header>
+    <nav class="site-nav" aria-label="Admin navigation">
+      <a href="admin-surveys.html" aria-current="page">Surveys</a>
+      <a href="survey.html">View public surveys</a>
+    </nav>
+  </header>
+
+  <main class="page">
+    <div class="page-header">
+      <h1>Surveys</h1>
+      <button type="button" class="btn btn-primary" id="new-survey-btn">
+        <svg class="icon" aria-hidden="true">
+          <use href="icons/icons.svg#plus"></use>
+        </svg>
+        New survey
+      </button>
+    </div>
+
+    <p class="form-banner-error" id="list-error" hidden></p>
+
+    <section aria-labelledby="surveys-heading">
+      <h2 id="surveys-heading" class="visually-hidden">Survey list</h2>
+
+      <!--
+        Static table shell: headers never change, only the row count
+        and row content do. JS only ever touches #survey-table-body
+        (rows), #survey-table-caption (count text), and toggles
+        `hidden` between the table and the empty-state message.
+      -->
+      <div class="table-wrap">
+        <table class="survey-table" id="survey-table" hidden>
+          <caption id="survey-table-caption"></caption>
+          <thead>
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Description</th>
+              <th scope="col">Questions</th>
+              <th scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="survey-table-body"></tbody>
+        </table>
+        <p class="empty-state" id="survey-empty-state" hidden>
+          No surveys yet. Create the first one to get started.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Create / edit survey dialog -->
+  <dialog id="survey-dialog" aria-labelledby="survey-dialog-title">
+    <div class="dialog-body">
+      <h2 id="survey-dialog-title">New survey</h2>
+      <p class="form-banner-error" id="survey-form-error" hidden></p>
+      <form id="survey-form" class="form" novalidate>
+        <input type="hidden" id="survey-id" value="" />
+        <div>
+          <label for="survey-name"><span>Name</span></label>
+          <input type="text" id="survey-name" name="name" required maxlength="150" />
+        </div>
+        <div>
+          <label for="survey-description"><span>Description</span></label>
+          <textarea id="survey-description" name="description" rows="3"></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="survey-save-btn">Create survey</button>
+          <button type="button" class="btn" data-close-dialog="survey-dialog">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- Delete confirmation dialog -->
+  <dialog id="confirm-dialog" aria-labelledby="confirm-dialog-title">
+    <div class="dialog-body">
+      <h2 id="confirm-dialog-title">Delete survey</h2>
+      <p data-confirm-message>Are you sure?</p>
+      <div class="form-actions">
+        <button type="button" class="btn btn-danger" data-confirm-accept>Delete</button>
+        <button type="button" class="btn" data-close-dialog="confirm-dialog">Cancel</button>
+      </div>
+    </div>
+  </dialog>
+<footer class="page-footer">
+    <p class="footer-text">
+      &copy;  Survey App
+    </p>
+
+  </footer>
+  <script src="js/utils.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/dialog.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/admin-surveys.js"></script>
+</body>
+
+</html>

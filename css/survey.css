@@ -1,0 +1,87 @@
+/* ---------------------------------------------------------------
+   survey.css — page-specific styles for survey.html
+   ------------------------------------------------------------- */
+
+.site-nav {
+  display: flex;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-3);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+  background: var(--purple-100);
+}
+
+.site-nav a {
+  text-decoration: none;
+  color: var(--ground);
+  opacity: 0.75; /* dims the non-current link */
+}
+
+.site-nav a[aria-current='page'] {
+  color: var(--ground);
+  font-weight: 600;
+  opacity: 1;
+}
+
+.site-nav a:hover {
+  opacity: 1;
+}
+
+.site-nav .settings-toggle {
+  background: var(--ground);
+  color: var(--purple-100);
+}
+
+.page-footer {
+  background: var(--purple-100);
+  color: var(--ground);
+  text-align: center;
+  padding: var(--space-3) var(--space-3);
+}
+
+.survey-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.survey-nav-position {
+  font-size: 0.85rem;
+  color: var(--ink-secondary);
+  min-width: 6em;
+  text-align: center;
+}
+
+.survey-heading {
+  font-size: 1.5rem;
+  margin: 0 0 var(--space-1);
+}
+
+.survey-description {
+  color: var(--ink-secondary);
+  margin: 0 0 var(--space-5);
+}
+
+.confirmation {
+  text-align: center;
+  padding: var(--space-6) 0;
+}
+
+.confirmation h1 {
+  font-size: 1.5rem;
+  margin-bottom: var(--space-3);
+}
+
+.confirmation p {
+  color: var(--ink-secondary);
+}
+
+.confirmation .email {
+  font-family: var(--font-code);
+  color: var(--ink);
+}
+.footer-text {
+  margin: 0;
+}

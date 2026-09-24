@@ -1,0 +1,116 @@
+/* ---------------------------------------------------------------
+   admin-surveys.css — page-specific styles for admin-surveys.html
+   Purple ramp (--purple-10 … --purple-100, defined in tokens.css)
+   used throughout: table header and accents lean on the more
+   saturated end, subtle row tinting leans on the muted end mixed
+   with --ground so body text stays legible.
+   ------------------------------------------------------------- */
+
+.site-nav {
+  display: flex;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-3);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+  background: var(--purple-100);
+ 
+  color: var(--purple-100);
+}
+.page-footer{
+  background: var(--purple-100);
+  color: var(--ground);
+  text-align: center;
+   padding: var(--space-3) var(--space-3);
+}
+.footer-text {
+  margin: 0;
+}
+
+.site-nav a {
+  text-decoration: none;
+  color: var(--ground);
+  opacity: 0.75; /* dims the non-current link, like "View public surveys" */
+}
+
+.site-nav a[aria-current='page'] {
+  color: var(--ground);
+  font-weight: 600;
+  opacity: 1;
+}
+
+.site-nav a:hover {
+  opacity: 1;
+}
+.site-nav .settings-toggle {
+  background: var(--ground);
+  color: var(--purple-100);
+  text-decoration-color: white;
+}
+
+#survey-table-wrap th:last-child,
+#survey-table-wrap td:last-child,
+.survey-table th:last-child,
+.survey-table td:last-child {
+  width: 1%;
+  white-space: nowrap;
+}
+
+/* Survey table --------------------------------------------------- */
+
+.survey-table caption {
+  color: var(--purple-90);
+  font-weight: 600;
+}
+
+.survey-table thead {
+  background: var(--purple-100);
+}
+
+.survey-table thead th {
+  color: var(--ground);
+  border-bottom-color: var(--purple-100);
+}
+
+/* Zebra striping: the tokens themselves are all mid-dark (L=32%),
+   so full-strength fills would fight with the ink text. Mixing a
+   small amount of each into --ground keeps the tint visible but
+   the rows readable. */
+
+.survey-table tbody tr:nth-child(odd) {
+  background: color-mix(in srgb, var(--purple-10) 10%, var(--ground));
+}
+
+.survey-table tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--purple-70) 12%, var(--ground));
+}
+
+.survey-table tbody tr:hover {
+  background: color-mix(in srgb, var(--purple-60) 16%, var(--ground));
+}
+
+.survey-table .cell-name {
+  color: var(--purple-90);
+}
+
+/* Page actions ----------------------------------------------------- */
+
+.page-header .btn-primary {
+  background: var(--purple-100);
+  border-color: var(--purple-100);
+  color: var(--ground);
+}
+
+.page-header .btn-primary:hover:not(:disabled) {
+  background: var(--purple-80);
+  border-color: var(--purple-80);
+  opacity: 1;
+}
+.page-header .btn-primary.btn-pressed {
+  background: var(--purple-20);
+  border-color: var(--purple-20);
+}
+
+.survey-table .cell-actions .btn:not(.btn-danger):hover:not(:disabled) {
+  border-color: var(--purple-60);
+  color: var(--purple-90);
+}

@@ -1,0 +1,185 @@
+/* ---------------------------------------------------------------
+   admin-questions.css — page-specific styles for admin-questions.html
+   Purple ramp (--purple-10 … --purple-100, defined in tokens.css)
+   used the same way as admin-surveys.css / survey.css: nav and
+   table header lean on the saturated end, subtle row tinting
+   leans on the muted end mixed with --ground.
+   ------------------------------------------------------------- */
+
+.site-nav {
+  display: flex;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-3);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+  background: var(--purple-100);
+}
+
+.site-nav a {
+  text-decoration: none;
+  color: var(--ground);
+  opacity: 0.75; /* dims the non-current link */
+}
+
+.site-nav a[aria-current='page'] {
+  color: var(--ground);
+  font-weight: 600;
+  opacity: 1;
+}
+
+.site-nav a:hover {
+  opacity: 1;
+}
+
+.site-nav .settings-toggle {
+  background: var(--ground);
+  color: var(--purple-100);
+}
+
+.page-footer {
+  background: var(--purple-100);
+  color: var(--ground);
+  text-align: center;
+  padding: var(--space-3) var(--space-3);
+}
+
+.footer-text {
+  margin: 0;
+}
+
+#survey-details {
+  padding: var(--space-3);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: var(--space-5);
+}
+
+#survey-details-body h2 {
+  margin: 0 0 var(--space-1);
+  font-size: 1.25rem;
+  color: var(--purple-90);
+}
+
+#survey-details-body p {
+  margin: 0;
+  color: var(--ink-secondary);
+}
+
+#survey-details-body dl {
+  display: flex;
+  gap: var(--space-4);
+  margin: var(--space-2) 0 0;
+  font-size: 0.85rem;
+  color: var(--ink-secondary);
+}
+
+#survey-details-body dt {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+#survey-details-body div {
+  display: flex;
+  gap: var(--space-1);
+}
+
+/* Questions table --------------------------------------------------- */
+
+.question-table caption {
+  color: var(--purple-90);
+  font-weight: 600;
+}
+
+.question-table th:last-child,
+.question-table td:last-child {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.question-table thead {
+  background: var(--purple-100);
+}
+
+.question-table thead th {
+  color: var(--ground);
+  border-bottom-color: var(--purple-100);
+}
+
+/* Zebra striping: same reasoning as admin-surveys.css — the ramp
+   is all mid-dark (L=32%), so a small mix into --ground keeps rows
+   legible while still reading as themed. */
+
+.question-table tbody tr:nth-child(odd) {
+  background: color-mix(in srgb, var(--purple-10) 10%, var(--ground));
+}
+
+.question-table tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--purple-70) 12%, var(--ground));
+}
+
+.question-table tbody tr:hover {
+  background: color-mix(in srgb, var(--purple-60) 16%, var(--ground));
+}
+
+.question-table .cell-mono {
+  color: var(--purple-90);
+}
+
+.question-table .cell-actions .btn:not(.btn-danger):hover:not(:disabled) {
+  border-color: var(--purple-60);
+  color: var(--purple-90);
+}
+
+/* Page actions ----------------------------------------------------- */
+
+.page-header .btn-primary {
+  background: var(--purple-100);
+  border-color: var(--purple-100);
+  color: var(--ground);
+}
+
+.page-header .btn-primary:hover:not(:disabled) {
+  background: var(--purple-80);
+  border-color: var(--purple-80);
+  opacity: 1;
+}
+
+.page-header .btn-primary.btn-pressed {
+  background: var(--purple-20);
+  border-color: var(--purple-20);
+}
+
+/* Question config panel (add/edit dialog) --------------------------- */
+
+.config-panel {
+  padding: var(--space-3);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.config-panel:empty {
+  display: none;
+}
+
+/* Preview dialog — grid so questions can share a row as space
+   allows: 1 column when narrow, up to 3 at the dialog's max width
+   (900px). #preview-form already has class="form" for the base
+   flex layout used elsewhere; this overrides just this instance. */
+
+#preview-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-2);
+  align-items: start; /* prevents a short field from stretching to match a taller neighbor */
+}
+
+/* The empty-state message ("No questions to preview yet.") and
+   anything else that should never share a row with a field. */
+#preview-form > .page-message {
+  grid-column: 1 / -1;
+}

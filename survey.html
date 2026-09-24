@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Survey</title>
+  <link rel="icon" href="icons/survey.png" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/survey.css" />
+  <script>
+    (function () {
+      try {
+        var raw = localStorage.getItem('survey_app_settings');
+        var settings = raw ? JSON.parse(raw) : {};
+        var theme = settings.theme === 'dark' ? 'dark' : 'light';
+        var scale = typeof settings.spacingScale === 'number' ? settings.spacingScale : 1;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.style.setProperty('--space-unit', 8 * scale + 'px');
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <header>
+    <nav class="site-nav" aria-label="Site navigation">
+      <a href="survey.html" aria-current="page">Surveys</a>
+      <a href="admin-surveys.html">Admin</a>
+    </nav>
+  </header>
+
+  <main class="page page--narrow">
+    <!-- Survey navigation: previous/next between surveys. Already
+         static — survey.js only toggles `hidden`/`disabled` and
+         sets textContent/onclick on these fixed buttons. -->
+    <nav class="survey-nav" aria-label="Survey navigation" id="survey-nav" hidden>
+      <button type="button" class="btn btn-icon" id="nav-first" aria-label="First survey">
+        <svg class="icon" aria-hidden="true"><use href="icons/icons.svg#chevrons-left"></use></svg>
+      </button>
+      <button type="button" class="btn btn-icon" id="nav-prev" aria-label="Previous survey">
+        <svg class="icon" aria-hidden="true"><use href="icons/icons.svg#chevron-left"></use></svg>
+      </button>
+      <span class="survey-nav-position" id="survey-position"></span>
+      <button type="button" class="btn btn-icon" id="nav-next" aria-label="Next survey">
+        <svg class="icon" aria-hidden="true"><use href="icons/icons.svg#chevron-right"></use></svg>
+      </button>
+      <button type="button" class="btn btn-icon" id="nav-last" aria-label="Last survey">
+        <svg class="icon" aria-hidden="true"><use href="icons/icons.svg#chevrons-right"></use></svg>
+      </button>
+    </nav>
+
+    <div id="survey-content">
+      <!-- One of these three top-level states is shown at a time;
+           survey.js only toggles `hidden` between them and fills in
+           the text/fields that are genuinely data-driven. -->
+
+      <p class="page-message" id="loading-message">Loading…</p>
+
+      <p class="page-message" id="empty-state" hidden>No surveys are available right now.</p>
+
+      <div id="survey-view" hidden>
+        <h1 class="survey-heading" id="survey-heading"></h1>
+        <p class="survey-description" id="survey-description" hidden></p>
+
+        <p class="page-message" id="no-questions-message" hidden>
+          This survey has no questions yet.
+        </p>
+
+        <div id="survey-quiz" hidden>
+          <div class="form-banner-error" id="form-banner-error" hidden></div>
+
+          <!--
+            The form shell (and its submit button) is static. Only
+            the question fields themselves are inherently dynamic —
+            their count and type are admin-defined data — so
+            survey.js builds just those into #survey-fields via
+            RenderInput.renderQuestionField().
+          -->
+          <form id="survey-form" class="form" novalidate>
+            <div id="survey-fields"></div>
+            <button type="submit" class="btn btn-primary" id="survey-submit-btn">Submit response</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="confirmation" id="confirmation-view" hidden>
+        <h1>Response submitted</h1>
+        <p>
+          Thank you. Your response to <strong id="confirmation-survey-name"></strong> was recorded on
+          <span class="email" id="confirmation-date"></span>.
+        </p>
+        <p><a href="survey.html">Back to surveys</a></p>
+      </div>
+    </div>
+  </main>
+ <footer class="page-footer">
+    <p class="footer-text">&copy; Survey App</p>
+  </footer>
+  <script src="js/utils.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/render-input.js"></script>
+  <script src="js/survey.js"></script>
+</body>
+</html>
