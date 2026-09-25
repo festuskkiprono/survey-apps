@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -18,10 +19,11 @@
         var scale = typeof settings.spacingScale === 'number' ? settings.spacingScale : 1;
         document.documentElement.setAttribute('data-theme', theme);
         document.documentElement.style.setProperty('--space-unit', 8 * scale + 'px');
-      } catch (e) {}
+      } catch (e) { }
     })();
   </script>
 </head>
+
 <body>
   <header>
     <nav class="site-nav" aria-label="Site navigation">
@@ -34,21 +36,7 @@
     <!-- Survey navigation: previous/next between surveys. Already
          static — survey.js only toggles `hidden`/`disabled` and
          sets textContent/onclick on these fixed buttons. -->
-    <nav class="survey-nav" aria-label="Survey navigation" id="survey-nav" hidden>
-      <button type="button" class="btn btn-icon" id="nav-first" aria-label="First survey">
-        <svg class="icon" aria-hidden="true"><use href="icons/icons.svg#chevrons-left"></use></svg>
-      </button>
-      <button type="button" class="btn btn-icon" id="nav-prev" aria-label="Previous survey">
-        <svg class="icon" aria-hidden="true"><use href="icons/icons.svg#chevron-left"></use></svg>
-      </button>
-      <span class="survey-nav-position" id="survey-position"></span>
-      <button type="button" class="btn btn-icon" id="nav-next" aria-label="Next survey">
-        <svg class="icon" aria-hidden="true"><use href="icons/icons.svg#chevron-right"></use></svg>
-      </button>
-      <button type="button" class="btn btn-icon" id="nav-last" aria-label="Last survey">
-        <svg class="icon" aria-hidden="true"><use href="icons/icons.svg#chevrons-right"></use></svg>
-      </button>
-    </nav>
+
 
     <div id="survey-content">
       <!-- One of these three top-level states is shown at a time;
@@ -93,8 +81,31 @@
         <p><a href="survey.html">Back to surveys</a></p>
       </div>
     </div>
+    <nav class="survey-nav" aria-label="Survey navigation" id="survey-nav" hidden>
+      <button type="button" class="btn btn-icon" id="nav-first" aria-label="First survey">
+        <svg class="icon" aria-hidden="true">
+          <use href="icons/icons.svg#chevrons-left"></use>
+        </svg>
+      </button>
+      <button type="button" class="btn btn-icon" id="nav-prev" aria-label="Previous survey">
+        <svg class="icon" aria-hidden="true">
+          <use href="icons/icons.svg#chevron-left"></use>
+        </svg>
+      </button>
+      <span class="survey-nav-position" id="survey-position"></span>
+      <button type="button" class="btn btn-icon" id="nav-next" aria-label="Next survey">
+        <svg class="icon" aria-hidden="true">
+          <use href="icons/icons.svg#chevron-right"></use>
+        </svg>
+      </button>
+      <button type="button" class="btn btn-icon" id="nav-last" aria-label="Last survey">
+        <svg class="icon" aria-hidden="true">
+          <use href="icons/icons.svg#chevrons-right"></use>
+        </svg>
+      </button>
+    </nav>
   </main>
- <footer class="page-footer">
+  <footer class="page-footer">
     <p class="footer-text">&copy; Survey App</p>
   </footer>
   <script src="js/utils.js"></script>
@@ -103,4 +114,5 @@
   <script src="js/render-input.js"></script>
   <script src="js/survey.js"></script>
 </body>
+
 </html>

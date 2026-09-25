@@ -129,38 +129,45 @@ function renderSurvey(survey) {
   submitBtn.disabled = false;
   submitBtn.textContent = 'Submit response';
 
-  surveyForm.onsubmit = async (event) => {
-    event.preventDefault();
-    bannerError.hidden = true;
-    bannerError.textContent = '';
-    questions.forEach((q) => RenderInput.setFieldError(fieldEls[q.name], null));
+  surveyForm.onsubmit = (event) =>
+    handleSubmit(event, survey, questions, answers, files, fieldEls);
+}
+//Submit handler: validate, show errors, and if valid, submit to storage and show confirmation.
+function handleSubmit(event, survey, questions, answers, files, fieldEls) {
+  event.preventDefault();
+  bannerError.hidden = true;
+  bannerError.textContent = '';
+  questions.forEach((q) => RenderInput.setFieldError(fieldEls[q.name], null));
 
-    const errors = validate(questions, answers, files);
-    if (Object.keys(errors).length > 0) {
-      Object.entries(errors).forEach(([name, message]) => {
-        RenderInput.setFieldError(fieldEls[name], message);
-      });
-      surveyView.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      return;
+  const errors = validate(questions, answers, files);
+  if (Object.keys(errors).length > 0) {
+    Object.entries(errors).forEach(([name, message]) => {
+      RenderInput.setFieldError(fieldEls[name], message);
+    });
+    surveyView.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
+
+  submitAnswers(survey, answers, files);
+}
+
+async function submitAnswers(survey, answers, files) {
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Submitting…';
+
+  try {
+    const encodedFiles = {};
+    for (const [name, fileList] of Object.entries(files)) {
+      encodedFiles[name] = await Promise.all(fileList.map(SurveyDB.fileToBase64));
     }
-
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Submitting…';
-
-    try {
-      const encodedFiles = {};
-      for (const [name, fileList] of Object.entries(files)) {
-        encodedFiles[name] = await Promise.all(fileList.map(SurveyDB.fileToBase64));
-      }
-      const receipt = SurveyDB.createResponse(survey.id, { answers, files: encodedFiles });
-      renderConfirmation(receipt);
-    } catch (err) {
-      bannerError.hidden = false;
-      bannerError.textContent = err.message || 'Something went wrong. Please try again.';
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Submit response';
-    }
-  };
+    const receipt = SurveyDB.createResponse(survey.id, { answers, files: encodedFiles });
+    renderConfirmation(receipt);
+  } catch (err) {
+    bannerError.hidden = false;
+    bannerError.textContent = err.message || 'Something went wrong. Please try again.';
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Submit response';
+  }
 }
 
 function validate(questions, answers, files) {
@@ -170,7 +177,7 @@ function validate(questions, answers, files) {
 
     if (question.type === 'file') {
       if (!files[question.name] || files[question.name].length === 0) {
-        errors[question.name] = 'This field is required.';
+        errors[question.name] = `The ${question.name} field is required.`;
       }
       return;
     }
@@ -194,7 +201,7 @@ function validate(questions, answers, files) {
 
     const value = answers[question.name];
     if (value === undefined || value === null || String(value).trim() === '') {
-      errors[question.name] = 'This field is required.';
+      errors[question.name] = `The ${question.name} field is required.`;
     }
   });
   return errors;
