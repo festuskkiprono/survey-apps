@@ -12,7 +12,7 @@
   padding: var(--space-3) var(--space-3);
   border-bottom: 1px solid var(--border);
   font-size: 0.9rem;
-  background: var(--purple-100);
+  background: var(--accent-100);
 }
 
 .site-nav a {
@@ -33,11 +33,11 @@
 
 .site-nav .settings-toggle {
   background: var(--ground);
-  color: var(--purple-100);
+  color: var(--accent-100);
 }
 
 .page-footer {
-  background: var(--purple-100);
+  background: var(--accent-100);
   color: var(--ground);
   text-align: center;
   padding: var(--space-3) var(--space-3);
@@ -87,7 +87,7 @@
 /* Questions table --------------------------------------------------- */
 
 .question-table caption {
-  color: var(--purple-90);
+  color: var(--accent-90);
   font-weight: 600;
 }
 
@@ -98,12 +98,12 @@
 }
 
 .question-table thead {
-  background: var(--purple-100);
+  background: var(--accent-100);
 }
 
 .question-table thead th {
   color: var(--ground);
-  border-bottom-color: var(--purple-100);
+  border-bottom-color: var(--accent-100);
 }
 
 /* Zebra striping: same reasoning as admin-surveys.css — the ramp
@@ -111,43 +111,43 @@
    legible while still reading as themed. */
 
 .question-table tbody tr:nth-child(odd) {
-  background: color-mix(in srgb, var(--purple-10) 10%, var(--ground));
+  background: color-mix(in srgb, var(--accent-10) 10%, var(--ground));
 }
 
 .question-table tbody tr:nth-child(even) {
-  background: color-mix(in srgb, var(--purple-70) 12%, var(--ground));
+  background: color-mix(in srgb, var(--accent-70) 12%, var(--ground));
 }
 
 .question-table tbody tr:hover {
-  background: color-mix(in srgb, var(--purple-60) 16%, var(--ground));
+  background: color-mix(in srgb, var(--accent-60) 16%, var(--ground));
 }
 
 .question-table .cell-mono {
-  color: var(--purple-90);
+  color: var(--accent-90);
 }
 
 .question-table .cell-actions .btn:not(.btn-danger):hover:not(:disabled) {
-  border-color: var(--purple-60);
-  color: var(--purple-90);
+  border-color: var(--accent-60);
+  color: var(--accent-90);
 }
 
 /* Page actions ----------------------------------------------------- */
 
 .page-header .btn-primary {
-  background: var(--purple-100);
-  border-color: var(--purple-100);
+  background: var(--accent-100);
+  border-color: var(--accent-100);
   color: var(--ground);
 }
 
 .page-header .btn-primary:hover:not(:disabled) {
-  background: var(--purple-80);
-  border-color: var(--purple-80);
+  background: var(--accent-80);
+  border-color: var(--accent-80);
   opacity: 1;
 }
 
 .page-header .btn-primary.btn-pressed {
-  background: var(--purple-20);
-  border-color: var(--purple-20);
+  background: var(--accent-20);
+  border-color: var(--accent-20);
 }
 
 /* Question config panel (add/edit dialog) --------------------------- */
@@ -169,17 +169,47 @@
 /* Preview dialog — grid so questions can share a row as space
    allows: 1 column when narrow, up to 3 at the dialog's max width
    (900px). #preview-form already has class="form" for the base
-   flex layout used elsewhere; this overrides just this instance. */
+   flex layout used elssewhere; this overrides just this instance. */
+
+/* Preview dialog — CSS grid whose column count comes from the
+   survey's "columns" setting (1, 2 or 3), passed in by
+   admin-questions.js as --preview-columns. #preview-form already
+   has class="form" for the base flex layout used elsewhere; this
+   overrides just this instance. */
 
 #preview-form {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(var(--preview-columns, 1), minmax(0, 1fr));
   gap: var(--space-2);
   align-items: start; /* prevents a short field from stretching to match a taller neighbor */
+}
+
+@media (max-width: 700px) {
+  #preview-form {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* The empty-state message ("No questions to preview yet.") and
    anything else that should never share a row with a field. */
 #preview-form > .page-message {
   grid-column: 1 / -1;
+  
+}
+
+/* Preview dialog transparency ---------------------------------------
+   The dialog surface is a see-through mix of --ground, and the
+   backdrop is lighter than the default so the page behind shows
+   through. Works in light and dark themes because it mixes from
+   the theme's own --ground colour. */
+
+#preview-dialog {
+  background: color-mix(in srgb, var(--ground) 80%, transparent);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  border: 1px solid var(--border);
+}
+
+#preview-dialog::backdrop {
+  background: rgba(17, 17, 17, 0.2);
 }

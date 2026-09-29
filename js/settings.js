@@ -17,7 +17,8 @@
  */
 
 const SETTINGS_KEY = 'survey_app_settings';
-const DEFAULT_SETTINGS = { theme: 'light', spacingScale: 1 };
+const COLOR_SCHEMES = ['purple', 'green', 'beige'];
+const DEFAULT_SETTINGS = { theme: 'light', spacingScale: 1, colorScheme: 'purple' };
 
 function getSettings() {
   try {
@@ -26,6 +27,7 @@ function getSettings() {
     return {
       theme: parsed.theme === 'dark' ? 'dark' : 'light',
       spacingScale: typeof parsed.spacingScale === 'number' ? parsed.spacingScale : 1,
+      colorScheme: COLOR_SCHEMES.includes(parsed.colorScheme) ? parsed.colorScheme : 'purple',
     };
   } catch {
     return { ...DEFAULT_SETTINGS };
@@ -38,6 +40,7 @@ function saveSettings(settings) {
 
 function applySettings(settings) {
   document.documentElement.setAttribute('data-theme', settings.theme);
+  document.documentElement.setAttribute('data-color-scheme', settings.colorScheme);
   document.documentElement.style.setProperty('--space-unit', `${8 * settings.spacingScale}px`);
 }
 
@@ -61,7 +64,7 @@ function injectSettingsUI() {
     <div class="dialog-body">
       <h2 id="settings-dialog-title">Settings</h2>
 
-      <div class="settings-group">
+            <div class="settings-group">
         <span class="field-label" id="theme-label">Theme</span>
         <div class="theme-toggle" role="radiogroup" aria-labelledby="theme-label">
           <label class="theme-option">
@@ -73,6 +76,27 @@ function injectSettingsUI() {
             <input type="radio" name="theme" value="dark" />
             <svg class="icon" aria-hidden="true"><use href="icons/icons.svg#moon"></use></svg>
             <span>Dark</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <span class="field-label" id="color-label">Color</span>
+        <div class="color-toggle" role="radiogroup" aria-labelledby="color-label">
+          <label class="color-option">
+            <input type="radio" name="colorScheme" value="purple" />
+            <span class="color-swatch" style="background: var(--scheme-preview-purple)"></span>
+            <span>Purple</span>
+          </label>
+          <label class="color-option">
+            <input type="radio" name="colorScheme" value="green" />
+            <span class="color-swatch" style="background: var(--scheme-preview-green)"></span>
+            <span>Green</span>
+          </label>
+          <label class="color-option">
+            <input type="radio" name="colorScheme" value="beige" />
+            <span class="color-swatch" style="background: var(--scheme-preview-beige)"></span>
+            <span>Beige</span>
           </label>
         </div>
       </div>
@@ -101,7 +125,7 @@ function injectSettingsUI() {
     if (event.target === dialog) dialog.close();
   });
 
-  // Theme radios
+    // Theme radios
   dialog.querySelectorAll('input[name="theme"]').forEach((input) => {
     input.checked = input.value === settings.theme;
     input.addEventListener('change', () => {
@@ -110,6 +134,17 @@ function injectSettingsUI() {
       saveSettings(settings);
     });
   });
+
+  // Color scheme radios
+  dialog.querySelectorAll('input[name="colorScheme"]').forEach((input) => {
+    input.checked = input.value === settings.colorScheme;
+    input.addEventListener('change', () => {
+      settings.colorScheme = input.value;
+      applySettings(settings);
+      saveSettings(settings);
+    });
+  });
+
 
   // Spacing slider
   const slider = dialog.querySelector('#spacing-slider');

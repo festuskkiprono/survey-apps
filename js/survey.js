@@ -177,7 +177,7 @@ function validate(questions, answers, files) {
 
     if (question.type === 'file') {
       if (!files[question.name] || files[question.name].length === 0) {
-        errors[question.name] = `The ${question.name} field is required.`;
+                errors[question.name] = RenderInput.requiredMessage(question);
       }
       return;
     }
@@ -200,8 +200,8 @@ function validate(questions, answers, files) {
     }
 
     const value = answers[question.name];
-    if (value === undefined || value === null || String(value).trim() === '') {
-      errors[question.name] = `The ${question.name} field is required.`;
+        if (value === undefined || value === null || String(value).trim() === '') {
+      errors[question.name] = RenderInput.requiredMessage(question);
     }
   });
   return errors;

@@ -85,12 +85,18 @@ function getSurvey(id) {
   return getSurveys().find((s) => s.id === Number(id)) ?? null;
 }
 
-function createSurvey({ name, description }) {
+function normalizeColumns(value) {
+  const n = Number(value);
+  return n === 2 || n === 3 ? n : 1;
+}
+
+function createSurvey({ name, description, columns }) {
   const surveys = getSurveys();
   const survey = {
     id: nextId('surveys'),
     name: name.trim(),
     description: (description ?? '').trim(),
+    columns: normalizeColumns(columns),
     createdAt: new Date().toISOString(),
   };
   surveys.push(survey);
@@ -98,16 +104,16 @@ function createSurvey({ name, description }) {
   return survey;
 }
 
-function updateSurvey(id, { name, description }) {
+function updateSurvey(id, { name, description, columns }) {
   const surveys = getSurveys();
   const survey = surveys.find((s) => s.id === Number(id));
   if (!survey) throw new Error('Survey not found');
   survey.name = name.trim();
   survey.description = (description ?? '').trim();
+  survey.columns = normalizeColumns(columns);
   writeArray(KEYS.surveys, surveys);
   return survey;
 }
-
 function deleteSurvey(id) {
   const surveys = getSurveys().filter((s) => s.id !== Number(id));
   writeArray(KEYS.surveys, surveys);

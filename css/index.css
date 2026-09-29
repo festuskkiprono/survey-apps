@@ -1,0 +1,51 @@
+/* index.css */
+
+/* Enabled button: hover works normally */
+#go-to-survey:hover {
+  color: red;
+  background-color: black;
+}
+
+#go-to-survey:focus-visible {
+  outline: none;
+  border: 1px solid var(--purple-40);
+}
+
+/* Disabled button: browser blocks clicks automatically, 
+   but we style it to LOOK disabled too */
+#go-to-survey-disabled:disabled {
+  color: #999;
+  background-color: #eee;
+  cursor: not-allowed;
+  border-color: #ccc;
+}
+
+/* This hover rule will simply never fire on the disabled button,
+   because :hover doesn't trigger on disabled elements */
+#go-to-survey-disabled:hover {
+  color: red;
+  background-color: black;
+}
+
+body{
+  background: black;
+  padding: 3em;
+}
+.success-alert {
+  background-color: green;
+  color: white;
+  padding: 12px 16px;
+  border: 7px solid;
+ box-sizing: content-box;
+}
+
+.accordion-header {
+  background-color: #fafafa;
+  color: #000;
+  width: 150px;
+  height:75;
+  padding: 4px 8px 6px 5px;
+  margin: 3px 24px;
+  border: 5px solid red;
+ box-sizing: border-box;
+}

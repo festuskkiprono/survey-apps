@@ -190,7 +190,12 @@
   --danger: #c0392b;
   --danger-bg: #fbeceb;
 
-  --font-body: 'IBM Plex Mono','Space Mono','Lexend Deca', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Required-but-empty fields: a friendly red-orange */
+  --required-bg: #ffe6db;
+  --required-border: #e2582d;
+  --icon-required: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><circle cx='12' cy='12' r='11' fill='%23e2582d'/><rect x='10.75' y='5.5' width='2.5' height='9' rx='1.25' fill='white'/><circle cx='12' cy='18' r='1.5' fill='white'/></svg>");
+
+  --font-body: 'IBM Plex Mono', 'Space Mono', 'Lexend Deca', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-code: ui-monospace, 'Cascadia Code', Consolas, monospace;
 
   --space-unit: 8px;
@@ -210,17 +215,22 @@
      from 100 to 10 in tens, opacity always 100%. Same hue and
      lightness throughout; only vividness changes.
      ----------------------------------------------------------- */
-  --purple-100: hsl(301, 100%, 32%);
-  --purple-90:  hsl(301, 90%,  32%);
-  --purple-80:  hsl(301, 80%,  32%);
-  --purple-70:  hsl(301, 70%,  32%);
-  --purple-60:  hsl(301, 60%,  32%);
-  --purple-50:  hsl(301, 50%,  32%);
-  --purple-40:  hsl(301, 40%,  32%);
-  --purple-30:  hsl(301, 30%,  32%);
-  --purple-20:  hsl(301, 20%,  32%);
-  --purple-10:  hsl(301, 10%,  32%);
+  --accent-100: hsl(301, 100%, 32%);
+  --accent-90: hsl(301, 90%, 32%);
+  --accent-80: hsl(301, 80%, 32%);
+  --accent-70: hsl(301, 70%, 32%);
+  --accent-60: hsl(301, 60%, 32%);
+  --accent-50: hsl(301, 50%, 32%);
+  --accent-40: hsl(301, 40%, 32%);
+  --accent-30: hsl(301, 30%, 32%);
+  --accent-20: hsl(301, 20%, 32%);
+  --accent-10: hsl(301, 10%, 32%);
+
+  --scheme-preview-purple: hsl(301, 100%, 32%);
+  --scheme-preview-green: hsl(152, 100%, 32%);
+  --scheme-preview-beige: hsl(35, 55%, 32%);
 }
+
 :root[data-theme='dark'] {
   --ink: #f0f0f0;
   --ink-secondary: #b3b3b3;
@@ -228,6 +238,40 @@
   --border: #333333;
   --panel: #1e1e1e;
   --ground: #121212;
+  --danger: #c0392b;
+  --danger-bg: #fbeceb;
+
   --danger: #ff6b5b;
   --danger-bg: #3a1f1c;
+
+  --required-bg: #c81414;
+  --required-border: #c20606;
+  --icon-required: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><circle cx='12' cy='12' r='11' fill='%23ff8a5c'/><rect x='10.75' y='5.5' width='2.5' height='9' rx='1.25' fill='%23121212'/><circle cx='12' cy='18' r='1.5' fill='%23121212'/></svg>");
+}
+
+:root[data-color-scheme='green'] {
+  --accent-100: hsl(152, 100%, 32%);
+  --accent-90: hsl(152, 90%, 32%);
+  --accent-80: hsl(152, 80%, 32%);
+  --accent-70: hsl(152, 70%, 32%);
+  --accent-60: hsl(152, 60%, 32%);
+  --accent-50: hsl(152, 50%, 32%);
+  --accent-40: hsl(152, 40%, 32%);
+  --accent-30: hsl(152, 30%, 32%);
+  --accent-20: hsl(152, 20%, 32%);
+  --accent-10: hsl(152, 10%, 32%);
+}
+
+/* ---- Color scheme: beige ---- */
+:root[data-color-scheme='beige'] {
+  --accent-100: hsl(35, 55%, 32%);
+  --accent-90: hsl(35, 50%, 32%);
+  --accent-80: hsl(35, 45%, 32%);
+  --accent-70: hsl(35, 40%, 32%);
+  --accent-60: hsl(35, 35%, 32%);
+  --accent-50: hsl(35, 30%, 32%);
+  --accent-40: hsl(35, 25%, 32%);
+  --accent-30: hsl(35, 20%, 32%);
+  --accent-20: hsl(35, 15%, 32%);
+  --accent-10: hsl(35, 10%, 32%);
 }

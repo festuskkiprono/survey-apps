@@ -8,7 +8,7 @@
   padding: var(--space-3) var(--space-3);
   border-bottom: 1px solid var(--border);
   font-size: 0.9rem;
-  background: var(--purple-100);
+  background: var(--accent-100);
 }
 
 .site-nav a {
@@ -30,11 +30,11 @@
 
 .site-nav .settings-toggle {
   background: var(--ground);
-  color: var(--purple-100);
+  color: var(--accent-100);
 }
 
 .page-footer {
-  background: var(--purple-100);
+  background: var(--accent-100);
   color: var(--ground);
   text-align: center;
   padding: var(--space-3) var(--space-3);

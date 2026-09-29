@@ -25,6 +25,13 @@
   border-color: var(--ink);
 }
 
+.btn:focus:not(:disabled),
+.btn:focus-visible:not(:disabled) {
+  outline: none;
+  border-color: var(--accent-40);
+  box-shadow: 0 0 0 2px var(--ground), 0 0 0 4px var(--accent-40);
+}
+
 .btn:disabled {
   color: var(--ink-muted);
   cursor: default;
@@ -144,12 +151,12 @@ td {
   gap: var(--space-3);
 }
 
-.form-row > * {
+.form-row>* {
   flex: 1;
 }
 
 .field-label,
-.form label > span:first-child {
+.form label>span:first-child {
   font-weight: 600;
   font-size: 0.9rem;
   display: block;
@@ -204,14 +211,25 @@ input[type='color'] {
   background: var(--ground);
 }
 
-input:focus,
-select:focus,
-textarea:focus {
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
   outline: none;
-  border-color: var(--ink);
+  border-color: var(--accent-40);
+  box-shadow: 0 0 0 2px var(--ground), 0 0 0 4px var(--accent-40);
 }
 
-input:invalid:not(:placeholder-shown) {
+input[type='checkbox']:focus-visible,
+input[type='radio']:focus-visible,
+input[type='range']:focus-visible {
+  outline: 2px solid var(--accent-40);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+input:user-invalid,
+select:user-invalid,
+textarea:user-invalid {
   border-color: var(--danger);
 }
 
@@ -312,7 +330,7 @@ legend {
   margin: 0;
 }
 
-.form-banner-error p + p {
+.form-banner-error p+p {
   margin-top: var(--space-1);
 }
 
@@ -342,7 +360,8 @@ dialog::backdrop {
 }
 
 .dialog-wide {
-  width: min(900px, calc(100vw - var(--space-4)));
+  width: 75vw;
+  max-height: 75vh;
 }
 
 .dialog-close {
@@ -357,6 +376,11 @@ dialog::backdrop {
 
 .dialog-close:hover {
   color: var(--ink);
+}
+
+.dialog-close:focus-visible {
+  outline: none;
+  border: 1px solid var(--purple-40);
 }
 
 /* Empty states -------------------------------------------------------- */
@@ -408,4 +432,82 @@ dialog::backdrop {
 .theme-option:has(input:checked) {
   border-color: var(--ink);
   background: var(--panel);
+}
+
+/* Required-but-empty fields ---------------------------------------
+   render-input.js adds .field--invalid to the field wrapper. The
+   input gets a warm background, an orange border and a "!" icon at
+   the right edge; the message below uses the existing .field-error. */
+
+.field--invalid input:where(:not([type='checkbox'], [type='radio'], [type='range'], [type='color'])),
+.field--invalid select,
+.field--invalid textarea {
+  background-color: var(--required-bg);
+  background-image: var(--icon-required);
+  background-repeat: no-repeat;
+  background-position: right var(--space-3) center;
+  background-size: 20px 20px;
+  border-color: var(--required-border);
+  padding-right: 44px;
+}
+
+/* Number, date, time and dropdown have native controls on the right,
+   so move the icon left of them. */
+.field--invalid input[type='number'],
+.field--invalid input[type='date'],
+.field--invalid input[type='time'],
+.field--invalid select {
+  background-position: right 40px center;
+  padding-right: 64px;
+}
+
+/* Textareas are tall, so pin the icon to the top right. */
+.field--invalid textarea {
+  background-position: right var(--space-3) top var(--space-3);
+}
+
+/* Radio / checkbox groups have no single input, so tint the group. */
+.field--invalid fieldset.choice-group {
+  background: var(--required-bg);
+  border-color: var(--required-border);
+}
+
+.field--invalid .field-error {
+  font-weight: 600;
+}
+
+.color-toggle {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.color-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+
+.color-option input {
+  width: auto;
+  margin: 0;
+}
+
+.color-option:has(input:checked) {
+  border-color: var(--ink);
+  background: var(--panel);
+}
+
+.color-swatch {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border-radius: 50%;
+  border: 1px solid var(--border);
 }

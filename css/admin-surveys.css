@@ -12,12 +12,12 @@
   padding: var(--space-3) var(--space-3);
   border-bottom: 1px solid var(--border);
   font-size: 0.9rem;
-  background: var(--purple-100);
+  background: var(--accent-100);
  
-  color: var(--purple-100);
+  color: var(--accent-100);
 }
 .page-footer{
-  background: var(--purple-100);
+  background: var(--accent-100);
   color: var(--ground);
   text-align: center;
    padding: var(--space-3) var(--space-3);
@@ -43,7 +43,7 @@
 }
 .site-nav .settings-toggle {
   background: var(--ground);
-  color: var(--purple-100);
+  color: var(--accent-100);
   text-decoration-color: white;
 }
 
@@ -58,17 +58,17 @@
 /* Survey table --------------------------------------------------- */
 
 .survey-table caption {
-  color: var(--purple-90);
+  color: var(--accent-90);
   font-weight: 600;
 }
 
 .survey-table thead {
-  background: var(--purple-100);
+  background: var(--accent-100);
 }
 
 .survey-table thead th {
   color: var(--ground);
-  border-bottom-color: var(--purple-100);
+  border-bottom-color: var(--accent-100);
 }
 
 /* Zebra striping: the tokens themselves are all mid-dark (L=32%),
@@ -77,40 +77,40 @@
    the rows readable. */
 
 .survey-table tbody tr:nth-child(odd) {
-  background: color-mix(in srgb, var(--purple-10) 10%, var(--ground));
+  background: color-mix(in srgb, var(--accent-10) 10%, var(--ground));
 }
 
 .survey-table tbody tr:nth-child(even) {
-  background: color-mix(in srgb, var(--purple-70) 12%, var(--ground));
+  background: color-mix(in srgb, var(--accent-70) 12%, var(--ground));
 }
 
 .survey-table tbody tr:hover {
-  background: color-mix(in srgb, var(--purple-60) 16%, var(--ground));
+  background: color-mix(in srgb, var(--accent-60) 16%, var(--ground));
 }
 
 .survey-table .cell-name {
-  color: var(--purple-90);
+  color: var(--accent-90);
 }
 
 /* Page actions ----------------------------------------------------- */
 
 .page-header .btn-primary {
-  background: var(--purple-100);
-  border-color: var(--purple-100);
+  background: var(--accent-100);
+  border-color: var(--accent-100);
   color: var(--ground);
 }
 
 .page-header .btn-primary:hover:not(:disabled) {
-  background: var(--purple-80);
-  border-color: var(--purple-80);
+  background: var(--accent-80);
+  border-color: var(--accent-80);
   opacity: 1;
 }
 .page-header .btn-primary.btn-pressed {
-  background: var(--purple-20);
-  border-color: var(--purple-20);
+  background: var(--accent-20);
+  border-color: var(--accent-20);
 }
 
 .survey-table .cell-actions .btn:not(.btn-danger):hover:not(:disabled) {
-  border-color: var(--purple-60);
-  color: var(--purple-90);
+  border-color: var(--accent-60);
+  color: var(--accent-90);
 }

@@ -10,16 +10,19 @@
   <link rel="stylesheet" href="css/base.css" />
   <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/admin-surveys.css" />
-  <script>
+    <script>
     (function () {
       try {
         var raw = localStorage.getItem('survey_app_settings');
         var settings = raw ? JSON.parse(raw) : {};
         var theme = settings.theme === 'dark' ? 'dark' : 'light';
         var scale = typeof settings.spacingScale === 'number' ? settings.spacingScale : 1;
+        var validSchemes = ['purple', 'green', 'beige'];
+        var scheme = validSchemes.indexOf(settings.colorScheme) !== -1 ? settings.colorScheme : 'purple';
         document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-color-scheme', scheme);
         document.documentElement.style.setProperty('--space-unit', 8 * scale + 'px');
-      } catch (e) { }
+      } catch (e) {}
     })();
   </script>
 </head>
@@ -81,18 +84,32 @@
       <p class="form-banner-error" id="survey-form-error" hidden></p>
       <form id="survey-form" class="form" novalidate>
         <input type="hidden" id="survey-id" value="" />
-        <div>
+        
+                <div class="field">
           <label for="survey-name"><span>Name</span></label>
           <input type="text" id="survey-name" name="name" required maxlength="150" />
+          <p class="field-error" data-error-slot></p>
         </div>
-        <div>
+               <div>
           <label for="survey-description"><span>Description</span></label>
           <textarea id="survey-description" name="description" rows="3"></textarea>
         </div>
+        <div>
+          <label for="survey-columns"><span>Preview columns</span></label>
+          <select id="survey-columns" name="columns" required>
+            <option value="1">1 column</option>
+            <option value="2">2 columns</option>
+            <option value="3">3 columns</option>
+          </select>
+          <p class="field-hint">How many columns questions are laid out in when previewing this survey.</p>
+        </div>
+
         <div class="form-actions">
           <button type="submit" class="btn btn-primary" id="survey-save-btn">Create survey</button>
           <button type="button" class="btn" data-close-dialog="survey-dialog">Cancel</button>
         </div>
+      </form>
+
       </form>
     </div>
   </dialog>
@@ -118,6 +135,7 @@
   <script src="js/storage.js"></script>
   <script src="js/dialog.js"></script>
   <script src="js/settings.js"></script>
+  <script src="js/render-input.js"></script>
   <script src="js/admin-surveys.js"></script>
 </body>
 

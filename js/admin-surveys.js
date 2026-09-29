@@ -22,6 +22,8 @@ const surveyDialogTitle = document.getElementById('survey-dialog-title');
 const surveyIdInput = document.getElementById('survey-id');
 const surveyNameInput = document.getElementById('survey-name');
 const surveyDescriptionInput = document.getElementById('survey-description');
+const surveyColumnsInput = document.getElementById('survey-columns');
+const surveyNameField = surveyNameInput.closest('.field');
 const surveySaveBtn = document.getElementById('survey-save-btn');
 const surveyFormError = document.getElementById('survey-form-error');
 
@@ -90,7 +92,9 @@ function renderSurveyTable() {
 function openCreateDialog() {
   surveyIdInput.value = '';
   surveyNameInput.value = '';
+  RenderInput.setFieldError(surveyNameField, null);
   surveyDescriptionInput.value = '';
+  surveyColumnsInput.value = '1';
   surveyDialogTitle.textContent = 'New survey';
   surveySaveBtn.textContent = 'Create survey';
   showFormError(null);
@@ -102,7 +106,9 @@ function openEditDialog(id) {
   if (!survey) return;
   surveyIdInput.value = survey.id;
   surveyNameInput.value = survey.name;
-  surveyDescriptionInput.value = survey.description ?? '';
+  RenderInput.setFieldError(surveyNameField, null);
+    surveyDescriptionInput.value = survey.description ?? '';
+  surveyColumnsInput.value = String(survey.columns ?? 1);
   surveyDialogTitle.textContent = 'Edit survey';
   surveySaveBtn.textContent = 'Save changes';
   showFormError(null);
@@ -121,18 +127,28 @@ function handleDeleteClick(id) {
   );
 }
 
+surveyNameInput.addEventListener('input', () => {
+  if (surveyNameField.classList.contains('field--invalid')) {
+    RenderInput.setFieldError(surveyNameField, null);
+  }
+});
+
 surveyForm.addEventListener('submit', (event) => {
   event.preventDefault();
   showFormError(null);
 
   const name = surveyNameInput.value.trim();
   if (!name) {
-    showFormError('Name is required.');
+    RenderInput.setFieldError(surveyNameField, 'This name field is required');
     return;
   }
 
   const id = surveyIdInput.value;
-  const data = { name, description: surveyDescriptionInput.value };
+  const data = {
+    name,
+    description: surveyDescriptionInput.value,
+    columns: Number(surveyColumnsInput.value),
+  };
 
   try {
     if (id) {

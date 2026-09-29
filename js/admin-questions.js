@@ -124,6 +124,8 @@ const questionIdInput = document.getElementById('question-id');
 const questionNameInput = document.getElementById('question-name');
 const questionTypeSelect = document.getElementById('question-type');
 const questionPromptInput = document.getElementById('question-prompt');
+const questionNameField = questionNameInput.closest('.field');
+const questionPromptField = questionPromptInput.closest('.field');
 const questionDescriptionInput = document.getElementById('question-description');
 const questionRequiredInput = document.getElementById('question-required');
 const questionConfigPanel = document.getElementById('question-config-panel');
@@ -140,6 +142,17 @@ RenderInput.QUESTION_TYPES.forEach((t) => {
   opt.value = t.value;
   opt.textContent = t.label;
   questionTypeSelect.appendChild(opt);
+});
+
+[
+  [questionNameInput, questionNameField],
+  [questionPromptInput, questionPromptField],
+].forEach(([input, field]) => {
+  input.addEventListener('input', () => {
+    if (field.classList.contains('field--invalid')) {
+      RenderInput.setFieldError(field, null);
+    }
+  });
 });
 
 function showFormError(message) {
@@ -329,6 +342,8 @@ function openCreateDialog() {
   editingId = null;
   questionIdInput.value = '';
   questionNameInput.value = '';
+  RenderInput.setFieldError(questionNameField, null);
+  RenderInput.setFieldError(questionPromptField, null);
   questionTypeSelect.value = 'short_text';
   questionTypeSelect.disabled = false;
   typeLockedHint.hidden = true;
@@ -346,9 +361,11 @@ function openEditDialog(id) {
   const question = SurveyDB.getQuestion(survey.id, id);
   if (!question) return;
 
-  editingId = id;
+   editingId = id;
   questionIdInput.value = question.id;
   questionNameInput.value = question.name;
+  RenderInput.setFieldError(questionNameField, null);
+  RenderInput.setFieldError(questionPromptField, null);
   questionTypeSelect.value = question.type;
   questionTypeSelect.disabled = true;
   typeLockedHint.hidden = false;
@@ -376,22 +393,41 @@ questionForm.addEventListener('submit', (event) => {
   const prompt = questionPromptInput.value.trim();
   const type = questionTypeSelect.value;
 
-  if (!/^[a-z0-9_]+$/.test(name)) {
-    showFormError('Question name must be lowercase letters, numbers, and underscores only.');
-    return;
-  }
-  if (!prompt) {
-    showFormError('Prompt is required.');
-    return;
+      let hasError = false;
+
+  if (!name) {
+    RenderInput.setFieldError(questionNameField, 'This question name field is required');
+    hasError = true;
+  } else if (!/^[a-z0-9_]+$/.test(name)) {
+    RenderInput.setFieldError(
+      questionNameField,
+      'Question name must be lowercase letters, numbers, and underscores only.'
+    );
+    hasError = true;
+  } else {
+    const existingNames = SurveyDB.getQuestions(survey.id)
+      .filter((q) => q.id !== editingId)
+      .map((q) => q.name);
+    if (existingNames.includes(name)) {
+      RenderInput.setFieldError(
+        questionNameField,
+        `A question named "${name}" already exists in this survey.`
+      );
+      hasError = true;
+    } else {
+      RenderInput.setFieldError(questionNameField, null);
+    }
   }
 
-  const existingNames = SurveyDB.getQuestions(survey.id)
-    .filter((q) => q.id !== editingId)
-    .map((q) => q.name);
-  if (existingNames.includes(name)) {
-    showFormError(`A question named "${name}" already exists in this survey.`);
-    return;
+  if (!prompt) {
+    RenderInput.setFieldError(questionPromptField, 'This prompt field is required');
+    hasError = true;
+  } else {
+    RenderInput.setFieldError(questionPromptField, null);
   }
+
+  if (hasError) return;
+  
 
   const data = {
     name,
@@ -423,8 +459,9 @@ document.getElementById('new-question-btn').addEventListener('click', openCreate
  * ------------------------------------------------------------- */
 
 document.getElementById('preview-btn').addEventListener('click', () => {
-  const previewForm = document.getElementById('preview-form');
+   const previewForm = document.getElementById('preview-form');
   previewForm.innerHTML = '';
+  previewForm.style.setProperty('--preview-columns', survey.columns ?? 1);
 
   const questions = SurveyDB.getQuestions(survey.id);
   if (questions.length === 0) {

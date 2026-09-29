@@ -9,14 +9,17 @@
   <link rel="stylesheet" href="css/base.css" />
   <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/admin-questions.css" />
-  <script>
+    <script>
     (function () {
       try {
         var raw = localStorage.getItem('survey_app_settings');
         var settings = raw ? JSON.parse(raw) : {};
         var theme = settings.theme === 'dark' ? 'dark' : 'light';
         var scale = typeof settings.spacingScale === 'number' ? settings.spacingScale : 1;
+        var validSchemes = ['purple', 'green', 'beige'];
+        var scheme = validSchemes.indexOf(settings.colorScheme) !== -1 ? settings.colorScheme : 'purple';
         document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-color-scheme', scheme);
         document.documentElement.style.setProperty('--space-unit', 8 * scale + 'px');
       } catch (e) {}
     })();
@@ -101,11 +104,12 @@
       <form id="question-form" class="form" novalidate>
         <input type="hidden" id="question-id" value="" />
 
-        <div>
+                <div class="field">
           <label for="question-name"><span>Question name</span></label>
           <input type="text" id="question-name" class="mono" required pattern="[a-z0-9_]+"
                  title="Lowercase letters, numbers, and underscores only" />
-          <p class="field-hint">Machine identifier, e.g. full_name. Lowercase and underscores.</p>
+          <p class="field-hint"> e.g. full_name. Lowercase and underscores.</p>
+          <p class="field-error" data-error-slot></p>
         </div>
 
         <div>
@@ -121,9 +125,10 @@
           <p class="field-hint" id="type-locked-hint" hidden>Type cannot be changed after creation.</p>
         </div>
 
-        <div>
+               <div class="field">
           <label for="question-prompt"><span>Prompt</span></label>
           <input type="text" id="question-prompt" required />
+          <p class="field-error" data-error-slot></p>
         </div>
 
         <div>
@@ -185,6 +190,7 @@
   <script src="js/dialog.js"></script>
   <script src="js/settings.js"></script>
   <script src="js/render-input.js"></script>
+  
   <script src="js/admin-questions.js"></script>
 </body>
 </html>

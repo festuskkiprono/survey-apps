@@ -106,9 +106,11 @@ function renderQuestionField(question, { value, onChange, id } = {}) {
       fieldset.appendChild(optionLabel);
     });
 
-    wrapper.appendChild(fieldset);
+        wrapper.appendChild(fieldset);
     appendErrorSlot(wrapper);
+    if (question.required) attachRequiredCheck(wrapper, question);
     return wrapper;
+  
   }
 
   // Every other type: a proper <label for="..."> plus its control.
@@ -201,6 +203,7 @@ function renderQuestionField(question, { value, onChange, id } = {}) {
   }
 
   appendErrorSlot(wrapper);
+  if (question.required) attachRequiredCheck(wrapper, question);
   return wrapper;
 }
 
@@ -211,6 +214,42 @@ function appendErrorSlot(wrapper) {
 function setFieldError(wrapper, message) {
   const slot = wrapper.querySelector('[data-error-slot]');
   if (slot) slot.textContent = message ?? '';
+  wrapper.classList.toggle('field--invalid', Boolean(message));
+  wrapper.querySelectorAll('input, select, textarea').forEach((control) => {
+    if (message) control.setAttribute('aria-invalid', 'true');
+    else control.removeAttribute('aria-invalid');
+  });
+}
+
+function requiredMessage(question) {
+  return `This ${question.name.replace(/_/g, ' ')} field is required`;
+}
+
+function isAnswered(controls) {
+  return [...controls].some((control) => {
+    if (control.type === 'checkbox' || control.type === 'radio') return control.checked;
+    if (control.type === 'file') return control.files.length > 0;
+    return control.value.trim() !== '';
+  });
+}
+
+// Shows the required message when the user leaves the field empty,
+// and clears it as soon as they answer.
+function attachRequiredCheck(wrapper, question) {
+  const controls = wrapper.querySelectorAll('input, select, textarea');
+  const check = () => {
+    if (controls[0]?.disabled) return; // read-only preview
+    setFieldError(wrapper, isAnswered(controls) ? '' : requiredMessage(question));
+  };
+
+  wrapper.addEventListener('focusout', (event) => {
+    if (!wrapper.contains(event.relatedTarget)) check(); // ignore moves inside the same field
+  });
+  const recheck = () => {
+    if (wrapper.classList.contains('field--invalid')) check();
+  };
+  wrapper.addEventListener('input', recheck);
+  wrapper.addEventListener('change', recheck);
 }
 
 function acceptFromFormat(format) {
@@ -226,4 +265,5 @@ window.RenderInput = {
   typeConfig,
   renderQuestionField,
   setFieldError,
+  requiredMessage,
 };

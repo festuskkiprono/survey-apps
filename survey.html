@@ -10,16 +10,19 @@
   <link rel="stylesheet" href="css/base.css" />
   <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/survey.css" />
-  <script>
+    <script>
     (function () {
       try {
         var raw = localStorage.getItem('survey_app_settings');
         var settings = raw ? JSON.parse(raw) : {};
         var theme = settings.theme === 'dark' ? 'dark' : 'light';
         var scale = typeof settings.spacingScale === 'number' ? settings.spacingScale : 1;
+        var validSchemes = ['purple', 'green', 'beige'];
+        var scheme = validSchemes.indexOf(settings.colorScheme) !== -1 ? settings.colorScheme : 'purple';
         document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-color-scheme', scheme);
         document.documentElement.style.setProperty('--space-unit', 8 * scale + 'px');
-      } catch (e) { }
+      } catch (e) {}
     })();
   </script>
 </head>
