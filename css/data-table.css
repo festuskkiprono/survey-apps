@@ -1,0 +1,229 @@
+/* ---------------------------------------------------------------
+   data-table.css — table tools shared by every admin table:
+   toolbar, side panel, chips, counts and the no-match row.
+   Built on tokens.css, so it follows the purple/green/beige
+   schemes, dark mode and the spacing slider automatically.
+   Classes are prefixed dt- to avoid clashing with components.css
+   (which already owns .badge, .field, .btn …).
+   ------------------------------------------------------------- */
+
+.data-table {
+  /* Text on accent fills. --ground turns near-black in dark mode,
+     which is unreadable on the L=32% accent ramp, so use white. */
+  --dt-on-accent: #ffffff;
+}
+
+/* display:flex/grid below would otherwise beat the hidden attribute */
+.data-table [hidden] {
+  display: none !important;
+}
+
+/* Toolbar ---------------------------------------------------------- */
+
+.dt-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.dt-tool {
+  gap: var(--space-2);
+}
+
+.dt-tool[aria-pressed='true'] {
+  background: var(--accent-100);
+  border-color: var(--accent-100);
+  color: var(--dt-on-accent);
+}
+
+.dt-tool[aria-pressed='true']:hover:not(:disabled) {
+  background: var(--accent-80);
+  border-color: var(--accent-80);
+}
+
+.dt-count {
+  min-width: 1.6em;
+  padding: 0 var(--space-1);
+  border-radius: 999px;
+  background: var(--accent-100);
+  color: var(--dt-on-accent);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.dt-tool[aria-pressed='true'] .dt-count {
+  background: var(--dt-on-accent);
+  color: var(--accent-100);
+}
+
+/* Workspace: table on the left, open tool on the right ------------- */
+
+.dt-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.dt-workspace.has-side {
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
+}
+
+.dt-side {
+  padding: var(--space-3);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.dt-side-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.dt-side-head h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.dt-side .form {
+  gap: var(--space-2);
+}
+
+.dt-side .field-label {
+  font-size: 0.85rem;
+}
+
+.dt-primary {
+  justify-content: center;
+  margin-top: var(--space-1);
+  background: var(--accent-100);
+  border-color: var(--accent-100);
+  color: var(--dt-on-accent);
+}
+
+.dt-primary:hover:not(:disabled) {
+  background: var(--accent-80);
+  border-color: var(--accent-80);
+}
+
+/* Narrow screens: the panel stacks above the table */
+@media (max-width: 760px) {
+  .dt-workspace.has-side {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dt-side {
+    order: -1;
+  }
+}
+
+/* Cells ------------------------------------------------------------- */
+
+.data-table th.num,
+.data-table td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.data-table td.cell-date {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.data-table tr.dt-empty-row td {
+  padding: var(--space-5) var(--space-3);
+  text-align: center;
+  color: var(--ink-secondary);
+}
+
+/* Footer: chips ------------------------------------------------------ */
+
+.dt-foot {
+  margin-top: var(--space-3);
+}
+
+.dt-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.dt-chips:empty {
+  display: none;
+}
+
+.dt-chip {
+  display: inline-flex;
+  align-items: stretch;
+  overflow: hidden;
+  font-size: 0.85rem;
+  background: var(--ground);
+  border: 1px solid var(--accent-40);
+  border-radius: var(--radius);
+}
+
+.dt-chip-tag {
+  display: flex;
+  align-items: center;
+  padding: 2px var(--space-2);
+  font-weight: 600;
+  background: var(--accent-100);
+  color: var(--dt-on-accent);
+}
+
+.dt-chip button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  font: inherit;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  border-left: 1px solid var(--border);
+}
+
+.dt-chip button:hover {
+  background: color-mix(in srgb, var(--accent-60) 14%, var(--ground));
+}
+
+.dt-chip button:focus-visible {
+  outline: 2px solid var(--accent-40);
+  outline-offset: -2px;
+}
+
+.dt-chip .k {
+  font-size: 0.75rem;
+  color: var(--ink-muted);
+}
+
+.dt-chip .x {
+  color: var(--ink-muted);
+}
+
+.dt-chip button:hover .x {
+  color: var(--danger);
+}
+
+.dt-clear {
+  padding: 2px var(--space-1);
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  text-decoration: underline;
+  text-decoration-color: var(--accent-40);
+}
+
+.dt-clear:hover {
+  text-decoration-color: currentColor;
+}

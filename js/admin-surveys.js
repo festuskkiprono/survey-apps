@@ -1,21 +1,15 @@
 /**
  * admin-surveys.js
- * Page logic for admin-surveys.html: render survey rows into the
- * static table shell already in the HTML, and wire up the
- * create/edit dialog and delete confirmation.
+ * Page logic for admin-surveys.html.
  *
- * The <table>, <thead>, and empty-state message are written once
- * in admin-surveys.html — they never change shape. This file only
- * ever touches the pieces that are actually data-driven: the rows
- * in #survey-table-body, the caption text, and which of
- * #survey-table / #survey-empty-state is visible.
+ * The table itself (header, rows, Search panel, chips, counts and
+ * empty states) is run by DataTable from js/data-table.js. This file
+ * only says which columns the survey table has, how each row is
+ * built from storage, and wires the create/edit/delete dialogs.
  */
 
-const surveyTable = document.getElementById('survey-table');
-const surveyTableCaption = document.getElementById('survey-table-caption');
-const surveyTableBody = document.getElementById('survey-table-body');
-const surveyEmptyState = document.getElementById('survey-empty-state');
 const listError = document.getElementById('list-error');
+const surveyTableBody = document.getElementById('survey-table-body');
 
 const surveyForm = document.getElementById('survey-form');
 const surveyDialogTitle = document.getElementById('survey-dialog-title');
@@ -27,68 +21,79 @@ const surveyNameField = surveyNameInput.closest('.field');
 const surveySaveBtn = document.getElementById('survey-save-btn');
 const surveyFormError = document.getElementById('survey-form-error');
 
-function showListError(message) {
-  if (!message) {
-    listError.hidden = true;
-    listError.textContent = '';
-    return;
-  }
-  listError.hidden = false;
-  listError.textContent = message;
-}
+/* ===== Table columns — add a column here and the header, rows and Search follow ===== */
+const SURVEY_COLUMNS = [
+  {
+    key: 'name',
+    label: 'Name',
+    type: 'text',
+    placeholder: 'e.g. feedback',
+    cell: (s) => `<td class="cell-name">${escapeHtml(s.name)}</td>`,
+  },
+  {
+    key: 'description',
+    label: 'Description',
+    type: 'text',
+    placeholder: 'e.g. customer',
+    cell: (s) => `<td class="cell-muted">${escapeHtml(s.description || '—')}</td>`,
+  },
+  {
+    key: 'questions',
+    label: 'Questions',
+    type: 'number',
+    cell: (s) => `<td class="num">${s.questions}</td>`,
+  },
+  {
+    key: 'created',
+    label: 'Created',
+    type: 'date',
+    cell: (s) => `<td class="cell-date">${s.created ? DataTable.formatDate(s.created) : '—'}</td>`,
+  },
+];
 
-function showFormError(message) {
-  if (!message) {
-    surveyFormError.hidden = true;
-    surveyFormError.textContent = '';
-    return;
-  }
-  surveyFormError.hidden = false;
-  surveyFormError.textContent = message;
+const surveyTable = DataTable.create(document.getElementById('survey-data-table'), {
+  columns: SURVEY_COLUMNS,
+  noun: ['survey', 'surveys'],
+  actions: (s) => `
+    <a class="btn btn-small" href="admin-questions.html?surveyId=${s.id}">Questions</a>
+    <button type="button" class="btn btn-small" data-action="edit" data-id="${s.id}">Edit</button>
+    <button type="button" class="btn btn-small btn-danger" data-action="delete" data-id="${s.id}">Delete</button>`,
+});
+
+/* One row per survey, with the derived values the columns search on */
+function buildSurveyRows() {
+  return SurveyDB.getSurveys().map((s) => ({
+    ...s,
+    questions: SurveyDB.getQuestions(s.id).length,
+    created: DataTable.toLocalDate(s.createdAt), // "YYYY-MM-DD" in local time, or "" if missing
+  }));
 }
 
 function renderSurveyTable() {
-  const surveys = SurveyDB.getSurveys();
-
-  if (surveys.length === 0) {
-    surveyTable.hidden = true;
-    surveyEmptyState.hidden = false;
-    surveyTableBody.innerHTML = '';
-    return;
-  }
-
-  surveyTable.hidden = false;
-  surveyEmptyState.hidden = true;
-  surveyTableCaption.textContent = `${surveys.length} survey${surveys.length === 1 ? '' : 's'}`;
-
-  surveyTableBody.innerHTML = '';
-
-  surveys.forEach((survey) => {
-    const questionCount = SurveyDB.getQuestions(survey.id).length;
-    const row = document.createElement('tr');
-
-    row.innerHTML = `
-      <td class="cell-name">${escapeHtml(survey.name)}</td>
-      <td class="cell-muted">${escapeHtml(survey.description || '—')}</td>
-      <td>${questionCount}</td>
-      <td class="cell-actions">
-        <a class="btn btn-small" href="admin-questions.html?surveyId=${survey.id}">Questions</a>
-        <button type="button" class="btn btn-small" data-action="edit" data-id="${survey.id}">Edit</button>
-        <button type="button" class="btn btn-small btn-danger" data-action="delete" data-id="${survey.id}">Delete</button>
-      </td>
-    `;
-    surveyTableBody.appendChild(row);
-  });
-
-  surveyTableBody.querySelectorAll('[data-action="edit"]').forEach((btn) => {
-    btn.addEventListener('click', () => openEditDialog(Number(btn.dataset.id)));
-  });
-  surveyTableBody.querySelectorAll('[data-action="delete"]').forEach((btn) => {
-    btn.addEventListener('click', () => handleDeleteClick(Number(btn.dataset.id)));
-  });
+  surveyTable.setRows(buildSurveyRows());
 }
 
-// Create survey
+/* One listener for every row's Edit/Delete, so nothing is re-attached on each render */
+surveyTableBody.addEventListener('click', (event) => {
+  const btn = event.target.closest('[data-action]');
+  if (!btn) return;
+  const id = Number(btn.dataset.id);
+  if (btn.dataset.action === 'edit') openEditDialog(id);
+  if (btn.dataset.action === 'delete') handleDeleteClick(id);
+});
+
+function showListError(message) {
+  listError.hidden = !message;
+  listError.textContent = message ?? '';
+}
+
+function showFormError(message) {
+  surveyFormError.hidden = !message;
+  surveyFormError.textContent = message ?? '';
+}
+
+/* ===== Create / edit dialog ===== */
+
 function openCreateDialog() {
   surveyIdInput.value = '';
   surveyNameInput.value = '';
@@ -107,7 +112,7 @@ function openEditDialog(id) {
   surveyIdInput.value = survey.id;
   surveyNameInput.value = survey.name;
   RenderInput.setFieldError(surveyNameField, null);
-    surveyDescriptionInput.value = survey.description ?? '';
+  surveyDescriptionInput.value = survey.description ?? '';
   surveyColumnsInput.value = String(survey.columns ?? 1);
   surveyDialogTitle.textContent = 'Edit survey';
   surveySaveBtn.textContent = 'Save changes';
@@ -151,13 +156,10 @@ surveyForm.addEventListener('submit', (event) => {
   };
 
   try {
-    if (id) {
-      SurveyDB.updateSurvey(id, data);
-    } else {
-      SurveyDB.createSurvey(data);
-    }
+    if (id) SurveyDB.updateSurvey(id, data);
+    else SurveyDB.createSurvey(data);
     DialogUtil.closeDialog('survey-dialog');
-    renderSurveyTable();
+    renderSurveyTable(); // active searches are kept
   } catch (err) {
     showFormError(err.message);
   }

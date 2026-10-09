@@ -9,8 +9,9 @@
   <link rel="stylesheet" href="css/tokens.css" />
   <link rel="stylesheet" href="css/base.css" />
   <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/data-table.css" />
   <link rel="stylesheet" href="css/admin-surveys.css" />
-    <script>
+  <script>
     (function () {
       try {
         var raw = localStorage.getItem('survey_app_settings');
@@ -52,27 +53,84 @@
       <h2 id="surveys-heading" class="visually-hidden">Survey list</h2>
 
       <!--
-        Static table shell: headers never change, only the row count
-        and row content do. JS only ever touches #survey-table-body
-        (rows), #survey-table-caption (count text), and toggles
-        `hidden` between the table and the empty-state message.
+        Table shell. js/data-table.js finds each piece by its data-dt
+        attribute and fills it: the header and rows, caption, chips,
+        counts, and which of table / empty state is visible.
       -->
-      <div class="table-wrap">
-        <table class="survey-table" id="survey-table" hidden>
-          <caption id="survey-table-caption"></caption>
-          <thead>
-            <tr>
-              <th scope="col">Name</th>
-              <th scope="col">Description</th>
-              <th scope="col">Questions</th>
-              <th scope="col">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="survey-table-body"></tbody>
-        </table>
-        <p class="empty-state" id="survey-empty-state" hidden>
-          No surveys yet. Create the first one to get started.
-        </p>
+      <div class="data-table" id="survey-data-table">
+
+        <!-- Tool buttons: each opens its panel to the right of the table -->
+        <div class="dt-toolbar" role="toolbar" aria-label="Table tools" data-dt="tools">
+          <button type="button" class="btn dt-tool" data-tool="search" aria-pressed="false" aria-controls="survey-dt-side">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+              stroke-linecap="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-4-4" />
+            </svg>
+            Search <span class="dt-count" data-dt="count-search" hidden></span>
+          </button>
+        </div>
+
+        <div class="dt-workspace" data-dt="workspace">
+          <div class="table-wrap">
+            <table class="survey-table" data-dt="table" hidden>
+              <caption data-dt="caption"></caption>
+              <thead>
+                <tr data-dt="head"></tr>
+              </thead>
+              <tbody id="survey-table-body" data-dt="body"></tbody>
+            </table>
+            <p class="empty-state" data-dt="empty" hidden>
+              No surveys yet. Create the first one to get started.
+            </p>
+          </div>
+
+          <aside class="dt-side" id="survey-dt-side" data-dt="side" aria-labelledby="survey-dt-side-title" hidden>
+            <div class="dt-side-head">
+              <h3 id="survey-dt-side-title" data-dt="side-title">Search</h3>
+              <button type="button" class="btn btn-icon" data-dt="close" aria-label="Close panel" title="Close">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                  stroke-linecap="round" aria-hidden="true">
+                  <path d="M6 6l12 12M18 6 6 18" />
+                </svg>
+              </button>
+            </div>
+
+            <!-- Search -->
+            <div data-tool-panel="search" hidden>
+              <p class="field-hint">Find surveys where one column matches a value. Every search must match.</p>
+              <form class="form" data-dt="search-form" novalidate>
+                <div>
+                  <label class="field-label" for="survey-dt-col">Column</label>
+                  <select id="survey-dt-col" data-dt="search-col"></select>
+                </div>
+                <div>
+                  <label class="field-label" for="survey-dt-rel">Relationship</label>
+                  <select id="survey-dt-rel" data-dt="search-rel"></select>
+                </div>
+                <div class="field" data-dt="search-field">
+                  <label class="field-label" for="survey-dt-val">Value</label>
+                  <input type="text" id="survey-dt-val" data-dt="search-val" autocomplete="off"
+                    aria-describedby="survey-dt-err" />
+                  <p class="field-error" id="survey-dt-err" data-dt="search-error"></p>
+                </div>
+                <button type="submit" class="btn dt-primary">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+                    stroke-linecap="round" aria-hidden="true">
+                    <circle cx="11" cy="11" r="7" />
+                    <path d="m20 20-4-4" />
+                  </svg>
+                  Search
+                </button>
+              </form>
+            </div>
+          </aside>
+        </div>
+
+        <div class="dt-foot" data-dt="foot" hidden>
+          <p class="visually-hidden" data-dt="status" aria-live="polite"></p>
+          <div class="dt-chips" data-dt="chips"></div>
+        </div>
       </div>
     </section>
   </main>
@@ -84,13 +142,13 @@
       <p class="form-banner-error" id="survey-form-error" hidden></p>
       <form id="survey-form" class="form" novalidate>
         <input type="hidden" id="survey-id" value="" />
-        
-                <div class="field">
+
+        <div class="field">
           <label for="survey-name"><span>Name</span></label>
           <input type="text" id="survey-name" name="name" required maxlength="150" />
           <p class="field-error" data-error-slot></p>
         </div>
-               <div>
+        <div>
           <label for="survey-description"><span>Description</span></label>
           <textarea id="survey-description" name="description" rows="3"></textarea>
         </div>
@@ -109,8 +167,6 @@
           <button type="button" class="btn" data-close-dialog="survey-dialog">Cancel</button>
         </div>
       </form>
-
-      </form>
     </div>
   </dialog>
 
@@ -125,17 +181,17 @@
       </div>
     </div>
   </dialog>
-<footer class="page-footer">
-    <p class="footer-text">
-      &copy;  Survey App
-    </p>
 
+  <footer class="page-footer">
+    <p class="footer-text">&copy; Survey App</p>
   </footer>
+
   <script src="js/utils.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/dialog.js"></script>
   <script src="js/settings.js"></script>
   <script src="js/render-input.js"></script>
+  <script src="js/data-table.js"></script>
   <script src="js/admin-surveys.js"></script>
 </body>
 
