@@ -8,8 +8,9 @@
   <link rel="stylesheet" href="css/tokens.css" />
   <link rel="stylesheet" href="css/base.css" />
   <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/data-table.css" />
   <link rel="stylesheet" href="css/admin-questions.css" />
-    <script>
+  <script>
     (function () {
       try {
         var raw = localStorage.getItem('survey_app_settings');
@@ -69,29 +70,84 @@
       <h3 id="questions-heading" class="visually-hidden">Question list</h3>
 
       <!--
-        Static table shell: headers never change, only the row
-        count and row content do. JS only ever touches
-        #question-table-body (rows), #question-table-caption (count
-        text), and toggles `hidden` between the table and the
-        empty-state message.
+        Table shell. js/data-table.js finds each piece by its data-dt
+        attribute and fills it: the header and rows, caption, chips,
+        counts, and which of table / empty state is visible.
       -->
-      <div class="table-wrap">
-        <table class="question-table" id="question-table" hidden>
-          <caption id="question-table-caption"></caption>
-          <thead>
-            <tr>
-              <th scope="col">Name</th>
-              <th scope="col">Prompt</th>
-              <th scope="col">Type</th>
-              <th scope="col">Required</th>
-              <th scope="col">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="question-table-body"></tbody>
-        </table>
-        <p class="empty-state" id="question-empty-state" hidden>
-          No questions yet. Add one to start building this survey.
-        </p>
+      <div class="data-table" id="question-data-table">
+
+        <!-- Tool buttons: each opens its panel to the right of the table -->
+        <div class="dt-toolbar" role="toolbar" aria-label="Table tools" data-dt="tools">
+          <button type="button" class="btn dt-tool" data-tool="search" aria-pressed="false" aria-controls="question-dt-side">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+              stroke-linecap="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-4-4" />
+            </svg>
+            Search <span class="dt-count" data-dt="count-search" hidden></span>
+          </button>
+        </div>
+
+        <div class="dt-workspace" data-dt="workspace">
+          <div class="table-wrap">
+            <table class="question-table" data-dt="table" hidden>
+              <caption data-dt="caption"></caption>
+              <thead>
+                <tr data-dt="head"></tr>
+              </thead>
+              <tbody id="question-table-body" data-dt="body"></tbody>
+            </table>
+            <p class="empty-state" data-dt="empty" hidden>
+              No questions yet. Add one to start building this survey.
+            </p>
+          </div>
+
+          <aside class="dt-side" id="question-dt-side" data-dt="side" aria-labelledby="question-dt-side-title" hidden>
+            <div class="dt-side-head">
+              <h4 id="question-dt-side-title" data-dt="side-title">Search</h4>
+              <button type="button" class="btn btn-icon" data-dt="close" aria-label="Close panel" title="Close">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                  stroke-linecap="round" aria-hidden="true">
+                  <path d="M6 6l12 12M18 6 6 18" />
+                </svg>
+              </button>
+            </div>
+
+            <!-- Search -->
+            <div data-tool-panel="search" hidden>
+              <p class="field-hint">Find questions where one column matches a value. Every search must match.</p>
+              <form class="form" data-dt="search-form" novalidate>
+                <div>
+                  <label class="field-label" for="question-dt-col">Column</label>
+                  <select id="question-dt-col" data-dt="search-col"></select>
+                </div>
+                <div>
+                  <label class="field-label" for="question-dt-rel">Relationship</label>
+                  <select id="question-dt-rel" data-dt="search-rel"></select>
+                </div>
+                <div class="field" data-dt="search-field">
+                  <label class="field-label" for="question-dt-val">Value</label>
+                  <input type="text" id="question-dt-val" data-dt="search-val" autocomplete="off"
+                    aria-describedby="question-dt-err" />
+                  <p class="field-error" id="question-dt-err" data-dt="search-error"></p>
+                </div>
+                <button type="submit" class="btn dt-primary">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+                    stroke-linecap="round" aria-hidden="true">
+                    <circle cx="11" cy="11" r="7" />
+                    <path d="m20 20-4-4" />
+                  </svg>
+                  Search
+                </button>
+              </form>
+            </div>
+          </aside>
+        </div>
+
+        <div class="dt-foot" data-dt="foot" hidden>
+          <p class="visually-hidden" data-dt="status" aria-live="polite"></p>
+          <div class="dt-chips" data-dt="chips"></div>
+        </div>
       </div>
     </section>
   </main>
@@ -104,7 +160,7 @@
       <form id="question-form" class="form" novalidate>
         <input type="hidden" id="question-id" value="" />
 
-                <div class="field">
+        <div class="field">
           <label for="question-name"><span>Question name</span></label>
           <input type="text" id="question-name" class="mono" required pattern="[a-z0-9_]+"
                  title="Lowercase letters, numbers, and underscores only" />
@@ -125,7 +181,7 @@
           <p class="field-hint" id="type-locked-hint" hidden>Type cannot be changed after creation.</p>
         </div>
 
-               <div class="field">
+        <div class="field">
           <label for="question-prompt"><span>Prompt</span></label>
           <input type="text" id="question-prompt" required />
           <p class="field-error" data-error-slot></p>
@@ -190,7 +246,7 @@
   <script src="js/dialog.js"></script>
   <script src="js/settings.js"></script>
   <script src="js/render-input.js"></script>
-  
+  <script src="js/data-table.js"></script>
   <script src="js/admin-questions.js"></script>
 </body>
 </html>

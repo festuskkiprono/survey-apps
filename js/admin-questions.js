@@ -4,11 +4,10 @@
  * questions table, the add/edit dialog (with per-type config
  * panels), and the preview dialog.
  *
- * The questions <table>, its <thead>, and the empty-state message
- * are written once in admin-questions.html — they never change
- * shape. This file only ever touches what's actually data-driven:
- * the rows in #question-table-body, the caption text, and which of
- * #question-table / #question-empty-state is visible.
+ * The questions table itself (header, rows, Search panel, chips,
+ * counts and empty states) is run by DataTable from
+ * js/data-table.js, the same engine as the surveys table. This file
+ * only says which columns the table has and how each row is built.
  */
 
 const params = new URLSearchParams(window.location.search);
@@ -53,55 +52,74 @@ function renderSurveyDetails() {
  * Questions table
  * ------------------------------------------------------------- */
 
-const questionTable = document.getElementById('question-table');
-const questionTableCaption = document.getElementById('question-table-caption');
 const questionTableBody = document.getElementById('question-table-body');
-const questionEmptyState = document.getElementById('question-empty-state');
 const listError = document.getElementById('list-error');
+
+/* Table columns — add a column here and the header, rows and Search follow */
+const QUESTION_COLUMNS = [
+  {
+    key: 'name',
+    label: 'Name',
+    type: 'text',
+    placeholder: 'e.g. full_name',
+    cell: (q) => `<td class="cell-mono">${escapeHtml(q.name)}</td>`,
+  },
+  {
+    key: 'prompt',
+    label: 'Prompt',
+    type: 'text',
+    placeholder: 'e.g. email',
+    cell: (q) => `<td class="cell-muted">${escapeHtml(q.prompt)}</td>`,
+  },
+  {
+    key: 'typeLabel',
+    label: 'Type',
+    type: 'text',
+    placeholder: 'e.g. choice',
+    cell: (q) => `<td><span class="badge">${escapeHtml(q.typeLabel)}</span></td>`,
+  },
+  {
+    key: 'requiredLabel',
+    label: 'Required',
+    type: 'text',
+    placeholder: 'yes or no',
+    cell: (q) => `<td>${q.requiredLabel}</td>`,
+  },
+];
+
+const questionTable = DataTable.create(document.getElementById('question-data-table'), {
+  columns: QUESTION_COLUMNS,
+  noun: ['question', 'questions'],
+  actions: (q) => `
+    <button type="button" class="btn btn-small" data-action="edit" data-id="${q.id}">Edit</button>
+    <button type="button" class="btn btn-small btn-danger" data-action="delete" data-id="${q.id}">Delete</button>`,
+});
+
+/* One row per question, with the shown text as searchable values ("Short text", "Yes") */
+function buildQuestionRows() {
+  return SurveyDB.getQuestions(survey.id).map((q) => ({
+    ...q,
+    typeLabel: RenderInput.typeConfig(q.type).label,
+    requiredLabel: q.required ? 'Yes' : 'No',
+  }));
+}
+
+function renderQuestionTable() {
+  questionTable.setRows(buildQuestionRows());
+}
+
+/* One listener for every row's Edit/Delete, so nothing is re-attached on each render */
+questionTableBody.addEventListener('click', (event) => {
+  const btn = event.target.closest('[data-action]');
+  if (!btn) return;
+  const id = Number(btn.dataset.id);
+  if (btn.dataset.action === 'edit') openEditDialog(id);
+  if (btn.dataset.action === 'delete') handleDeleteClick(id);
+});
 
 function showListError(message) {
   listError.hidden = !message;
   listError.textContent = message ?? '';
-}
-
-function renderQuestionTable() {
-  const questions = SurveyDB.getQuestions(survey.id);
-
-  if (questions.length === 0) {
-    questionTable.hidden = true;
-    questionEmptyState.hidden = false;
-    questionTableBody.innerHTML = '';
-    return;
-  }
-
-  questionTable.hidden = false;
-  questionEmptyState.hidden = true;
-  questionTableCaption.textContent = `${questions.length} question${questions.length === 1 ? '' : 's'}`;
-
-  questionTableBody.innerHTML = '';
-
-  questions.forEach((question) => {
-    const config = RenderInput.typeConfig(question.type);
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td class="cell-mono">${escapeHtml(question.name)}</td>
-      <td class="cell-muted">${escapeHtml(question.prompt)}</td>
-      <td><span class="badge">${escapeHtml(config.label)}</span></td>
-      <td>${question.required ? 'Yes' : 'No'}</td>
-      <td class="cell-actions">
-        <button type="button" class="btn btn-small" data-action="edit" data-id="${question.id}">Edit</button>
-        <button type="button" class="btn btn-small btn-danger" data-action="delete" data-id="${question.id}">Delete</button>
-      </td>
-    `;
-    questionTableBody.appendChild(row);
-  });
-
-  questionTableBody.querySelectorAll('[data-action="edit"]').forEach((btn) => {
-    btn.addEventListener('click', () => openEditDialog(Number(btn.dataset.id)));
-  });
-  questionTableBody.querySelectorAll('[data-action="delete"]').forEach((btn) => {
-    btn.addEventListener('click', () => handleDeleteClick(Number(btn.dataset.id)));
-  });
 }
 
 function handleDeleteClick(id) {
@@ -361,7 +379,7 @@ function openEditDialog(id) {
   const question = SurveyDB.getQuestion(survey.id, id);
   if (!question) return;
 
-   editingId = id;
+  editingId = id;
   questionIdInput.value = question.id;
   questionNameInput.value = question.name;
   RenderInput.setFieldError(questionNameField, null);
@@ -393,7 +411,7 @@ questionForm.addEventListener('submit', (event) => {
   const prompt = questionPromptInput.value.trim();
   const type = questionTypeSelect.value;
 
-      let hasError = false;
+  let hasError = false;
 
   if (!name) {
     RenderInput.setFieldError(questionNameField, 'This question name field is required');
@@ -427,7 +445,6 @@ questionForm.addEventListener('submit', (event) => {
   }
 
   if (hasError) return;
-  
 
   const data = {
     name,
@@ -445,7 +462,7 @@ questionForm.addEventListener('submit', (event) => {
       SurveyDB.createQuestion(survey.id, data);
     }
     DialogUtil.closeDialog('question-dialog');
-    renderQuestionTable();
+    renderQuestionTable(); // active searches are kept
     renderSurveyDetails();
   } catch (err) {
     showFormError(err.message);
@@ -459,7 +476,7 @@ document.getElementById('new-question-btn').addEventListener('click', openCreate
  * ------------------------------------------------------------- */
 
 document.getElementById('preview-btn').addEventListener('click', () => {
-   const previewForm = document.getElementById('preview-form');
+  const previewForm = document.getElementById('preview-form');
   previewForm.innerHTML = '';
   previewForm.style.setProperty('--preview-columns', survey.columns ?? 1);
 
