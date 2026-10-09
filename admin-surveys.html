@@ -69,6 +69,28 @@
             </svg>
             Search <span class="dt-count" data-dt="count-search" hidden></span>
           </button>
+          <button type="button" class="btn dt-tool" data-tool="filter" aria-pressed="false" aria-controls="survey-dt-side">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 5h18l-7 8.5V19l-4 2v-7.5z" />
+            </svg>
+            Filter <span class="dt-count" data-dt="count-filter" hidden></span>
+          </button>
+          <button type="button" class="btn dt-tool" data-tool="sort" aria-pressed="false" aria-controls="survey-dt-side">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4" />
+            </svg>
+            Sort <span class="dt-count" data-dt="count-sort" hidden></span>
+          </button>
+          <button type="button" class="btn dt-tool" data-tool="columns" aria-pressed="false" aria-controls="survey-dt-side">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="16" rx="2" />
+              <path d="M9 4v16M15 4v16" />
+            </svg>
+            Columns <span class="dt-count dt-count-cols" data-dt="count-columns"></span>
+          </button>
         </div>
 
         <div class="dt-workspace" data-dt="workspace">
@@ -123,6 +145,25 @@
                   Search
                 </button>
               </form>
+            </div>
+
+            <!-- Filters: + applies a row, the bin removes it -->
+            <div data-tool-panel="filter" hidden>
+              <p class="field-hint">Every filter must match. Press + (or Enter) to apply a row.</p>
+              <div class="dt-filter-rows" data-dt="filter-rows"></div>
+            </div>
+
+            <!-- Sorting: + applies a level, the bin removes it. Header arrows also sort. -->
+            <div data-tool-panel="sort" hidden>
+              <p class="field-hint">The first level sorts the table; later levels break ties. You can also click a column header.</p>
+              <div class="dt-filter-rows" data-dt="sort-rows"></div>
+            </div>
+
+            <!-- Show / hide columns -->
+            <div data-tool-panel="columns" hidden>
+              <p class="field-hint">Untick a column to hide it. At least one stays visible.</p>
+              <div class="dt-col-checks" data-dt="col-checks" role="group" aria-label="Show or hide columns"></div>
+              <button type="button" class="dt-clear" data-dt="show-all-cols" hidden>Show all</button>
             </div>
           </aside>
         </div>

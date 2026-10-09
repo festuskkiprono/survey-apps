@@ -143,6 +143,217 @@
   color: var(--ink-secondary);
 }
 
+/* Filter builder rows ------------------------------------------------
+   Card per row: Column and Relationship on top, Value with the
+   + / bin buttons underneath. Applied rows lock and get an accent edge. */
+
+.dt-filter-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.dt-frow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  grid-template-areas:
+    'col rel rel'
+    'val val actions'
+    'err err err';
+  gap: var(--space-1) var(--space-2);
+  padding: var(--space-2);
+  background: var(--ground);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.dt-frow.is-applied {
+  border-left-color: var(--accent-100);
+}
+
+.dt-f-col { grid-area: col; min-width: 0; }
+.dt-f-rel { grid-area: rel; min-width: 0; }
+.dt-f-val { grid-area: val; min-width: 0; }
+
+.dt-f-actions {
+  grid-area: actions;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-1);
+}
+
+.dt-frow .field-label {
+  margin-bottom: 2px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ink-secondary);
+}
+
+.dt-frow input,
+.dt-frow select {
+  padding: var(--space-1) var(--space-2);
+  font-size: 0.85rem;
+}
+
+.dt-frow input:disabled,
+.dt-frow select:disabled {
+  color: var(--ink-secondary);
+  background: var(--panel);
+  opacity: 1;
+}
+
+.dt-frow input[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.dt-f-error {
+  grid-area: err;
+  margin: 0;
+}
+
+.dt-f-add,
+.dt-f-bin {
+  padding: var(--space-1) var(--space-2);
+  line-height: 1;
+}
+
+.dt-f-add:hover:not(:disabled) {
+  border-color: var(--accent-60);
+}
+
+.dt-frow.is-applied .dt-f-add {
+  background: var(--accent-100);
+  border-color: var(--accent-100);
+  color: var(--dt-on-accent);
+}
+
+.dt-f-bin:hover:not(:disabled) {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* Sort builder rows: same card as filter rows, with a "Sort by / Then by" lead */
+
+.dt-srow {
+  grid-template-areas:
+    'lead lead lead'
+    'col dir actions'
+    'err err err';
+}
+
+.dt-s-lead {
+  grid-area: lead;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-secondary);
+}
+
+.dt-s-col { grid-area: col; min-width: 0; }
+.dt-s-dir { grid-area: dir; min-width: 0; }
+
+.dt-frow select[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+/* Sortable headers -------------------------------------------------
+   The button inherits the header's colour, case and spacing, so it
+   looks like the plain label it replaced, plus arrows. */
+
+.dt-sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.dt-sort-btn:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.dt-arrows {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dt-arrows svg {
+  width: 8px;
+  height: 5px;
+  fill: currentColor;
+  opacity: 0.35;
+}
+
+.dt-sort-btn:hover .dt-arrows svg {
+  opacity: 0.6;
+}
+
+th[aria-sort='ascending'] .dt-arrows .up,
+th[aria-sort='descending'] .dt-arrows .down {
+  opacity: 1;
+}
+
+.dt-priority {
+  min-width: 1.5em;
+  padding: 0 3px;
+  font-size: 0.65rem;
+  line-height: 1.4;
+  text-align: center;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+}
+
+/* Columns panel ------------------------------------------------------ */
+
+.dt-col-checks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-bottom: var(--space-2);
+}
+
+.dt-col-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  font-size: 0.9rem;
+  background: var(--ground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.dt-col-check input {
+  width: auto;
+  margin: 0;
+  accent-color: var(--accent-100);
+}
+
+.dt-col-check.is-locked {
+  color: var(--ink-secondary);
+  cursor: default;
+}
+
+/* The Columns button shows "3/4" as plain text, not an accent pill */
+.dt-count.dt-count-cols {
+  background: none;
+  color: inherit;
+  border: 1px solid currentColor;
+  font-weight: 400;
+}
+
 /* Footer: chips ------------------------------------------------------ */
 
 .dt-foot {
@@ -177,6 +388,19 @@
   font-weight: 600;
   background: var(--accent-100);
   color: var(--dt-on-accent);
+}
+
+/* Filter chips use a softer shade than Search, so the two sources are easy to tell apart */
+.dt-chip-tag.is-filter {
+  background: var(--accent-60);
+}
+
+.dt-chip-tag.is-sort {
+  background: var(--accent-40);
+}
+
+.dt-chip-tag.is-hidden {
+  background: var(--accent-20);
 }
 
 .dt-chip button {
