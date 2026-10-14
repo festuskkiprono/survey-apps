@@ -7,7 +7,7 @@
  *
  * A page describes its table (columns, how a row is drawn, row
  * actions) and hands over rows with setRows(). This file owns
- * everything else: the header, the rows, the tool panels, the
+ * everything else: the header, the rows, the tool panel, the
  * active conditions, chips, counts and empty states.
  *
  * Markup: the page writes the static shell (see admin-surveys.html)
@@ -16,14 +16,16 @@
  * never clash and no ids are hard-coded here. A tool whose markup
  * is missing from the shell is simply switched off.
  *
- * Tools:
- *  - Search:  one condition at a time from a single form.
- *  - Filter:  builder rows; + applies a row, the bin removes it.
- *  - Sort:    builder rows (first level sorts, later ones break ties),
- *             plus clickable header arrows for a quick one-column sort.
+ * Tools (the open tool's panel sits between the toolbar and the table):
+ *  - Search:  one condition at a time; the Search button adds it.
+ *  - Filter:  draft rows (+ adds a row, the bin removes one). Nothing
+ *             reaches the table until the Filter button is pressed.
+ *  - Sort:    draft levels, applied with the Sort button. The first
+ *             level sorts; later ones break ties. Clicking a column
+ *             header is a quick sort that applies straight away.
  *  - Columns: tick boxes to hide/show columns (one always stays).
- * Search and Filter write into the same `filters` list, and every
- * condition must match (AND).
+ * Search and Filter conditions sit in one `filters` list, and every
+ * condition must match (AND). Removing a chip applies straight away.
  *
  * Pipeline on every render():
  *   rows → filters → sort → draw (visible columns only)
@@ -79,7 +81,6 @@
 
   const ICONS = {
     plus: '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
-    check: '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>',
     bin: '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>',
     arrows: '<span class="dt-arrows" aria-hidden="true"><svg class="up" viewBox="0 0 10 6"><path d="M5 0 10 6H0z"/></svg><svg class="down" viewBox="0 0 10 6"><path d="M0 0h10L5 6z"/></svg></span>',
   };
@@ -140,7 +141,6 @@
     const q = (name) => root.querySelector(`[data-dt="${name}"]`);
     const els = {
       tools: q('tools'),
-      workspace: q('workspace'),
       side: q('side'),
       sideTitle: q('side-title'),
       close: q('close'),
@@ -162,9 +162,13 @@
       searchCount: q('count-search'),
       // Filter
       filterRows: q('filter-rows'),
+      filterApply: q('filter-apply'),
+      filterPending: q('filter-pending'),
       filterCount: q('count-filter'),
       // Sort
       sortRows: q('sort-rows'),
+      sortApply: q('sort-apply'),
+      sortPending: q('sort-pending'),
       sortCount: q('count-sort'),
       // Columns
       colChecks: q('col-checks'),
@@ -174,8 +178,8 @@
 
     const has = {
       search: Boolean(els.searchForm),
-      filter: Boolean(els.filterRows),
-      sort: Boolean(els.sortRows),
+      filter: Boolean(els.filterRows && els.filterApply),
+      sort: Boolean(els.sortRows && els.sortApply),
       columns: Boolean(els.colChecks),
     };
 
@@ -190,15 +194,15 @@
 
     const state = {
       rows: [],              // everything the page handed over
-      filters: [],           // active conditions: [{ id, col, rel, value, source: 'search' | 'filter' }]
-      filterRows: [],        // filter builder rows: [{ id, col, rel, value, filterId, error }] — filterId set once applied
-      sortRows: [],          // sort builder rows: [{ id, col, dir, applied, error }] — applied rows, top to bottom, are the sort order
+      filters: [],           // APPLIED conditions: [{ id, col, rel, value, source: 'search' | 'filter', rowId? }]
+      filterRows: [],        // DRAFT filter rows in the panel: [{ id, col, rel, value, error }]
+      sorts: [],             // APPLIED sort levels, in priority order: [{ rowId, col, dir }]
+      sortRows: [],          // DRAFT sort rows in the panel: [{ id, col ('' = not chosen), dir, error }]
       hiddenCols: new Set(), // keys of columns the user has hidden
-      tool: null,            // which side panel is open: 'search' | 'filter' | 'sort' | 'columns' | null
+      tool: null,            // which panel is open: 'search' | 'filter' | 'sort' | 'columns' | null
     };
     let nextFilterId = 1;
     let nextRowId = 1;
-    let nextSortRowId = 1;
 
     const colOf = (key) => columns.find((c) => c.key === key);
     const valueOf = (col, row) => (col.value ? col.value(row) : row[col.key]);
@@ -209,7 +213,7 @@
     const placeholderFor = (col) =>
       col.placeholder ?? (col.type === 'number' ? 'e.g. 5' : col.type === 'text' ? 'e.g. feedback' : '');
     const visibleColumns = () => columns.filter((c) => !state.hiddenCols.has(c.key));
-    const sortRules = () => state.sortRows.filter((r) => r.applied); // priority order, top to bottom
+    const focusId = (id) => document.getElementById(id)?.focus();
 
     /* ----- Matching + sorting ----- */
 
@@ -221,7 +225,7 @@
       return TESTS[f.rel](String(v ?? ''), f.value);
     }
 
-    const applyFilters = (rows) => rows.filter((row) => state.filters.every((f) => matches(row, f)));
+    const matchAll = (rows) => rows.filter((row) => state.filters.every((f) => matches(row, f)));
 
     // Numbers compare as numbers; text and dates with localeCompare, so "apple" and "Zebra"
     // sort alphabetically regardless of case, and "Survey 2" comes before "Survey 10".
@@ -232,11 +236,10 @@
       return String(va ?? '').localeCompare(String(vb ?? ''), undefined, { sensitivity: 'base', numeric: true });
     }
 
-    function applySort(rows) {
-      const rules = sortRules();
-      if (!rules.length) return rows;
+    function sortAll(rows) {
+      if (!state.sorts.length) return rows;
       return [...rows].sort((a, b) => {
-        for (const { col, dir } of rules) { // first rule decides; later rules break ties
+        for (const { col, dir } of state.sorts) { // first level decides; later levels break ties
           const c = compareBy(colOf(col), a, b);
           if (c !== 0) return dir === 'asc' ? c : -c;
         }
@@ -283,285 +286,340 @@
       setSearchError('');
     }
 
-    // Reuses the app's .field--invalid styling from components.css
     function setSearchError(msg) {
       els.searchError.textContent = msg;
-      els.searchField.classList.toggle('field--invalid', Boolean(msg));
+      els.searchField?.classList.toggle('field--invalid', Boolean(msg));
       if (msg) els.searchVal.setAttribute('aria-invalid', 'true');
       else els.searchVal.removeAttribute('aria-invalid');
     }
 
-    /* ----- Filter builder rows ----- */
+    /* ----- Shared helpers for the draft row lists ----- */
+
+    // Clear one row's inline error without redrawing the list (keeps focus where it is)
+    function clearRowError(row, rowEl) {
+      if (!row.error) return;
+      row.error = '';
+      rowEl.querySelectorAll('[aria-invalid]').forEach((el) => {
+        el.removeAttribute('aria-invalid');
+        el.removeAttribute('aria-describedby');
+      });
+      rowEl.querySelector('.dt-f-error')?.remove();
+    }
+
+    // Labels are shown on the first row only; later rows keep them for screen readers
+    const labelClass = (i) => (i === 0 ? 'field-label' : 'field-label visually-hidden');
+
+    const rowButtons = (noun) => `
+      <div class="dt-f-actions">
+        <button type="button" class="btn btn-icon dt-f-add" data-action="add" aria-label="Add a ${noun} row below" title="Add a row">${ICONS.plus}</button>
+        <button type="button" class="btn btn-icon dt-f-bin" data-action="delete" aria-label="Remove this ${noun} row" title="Remove row">${ICONS.bin}</button>
+      </div>`;
+
+    /* ----- Filter: draft rows, applied with the Filter button ----- */
 
     function newFilterRow() {
       const col = searchable[0];
-      return { id: nextRowId++, col: col.key, rel: RELATIONS[col.type][0][0], value: '', filterId: null, error: '' };
+      return { id: nextRowId++, col: col.key, rel: RELATIONS[col.type][0][0], value: '', error: '' };
     }
 
-    // There is always exactly one blank row to type into
-    function ensureEmptyRow() {
-      if (has.filter && !state.filterRows.some((r) => r.filterId === null)) state.filterRows.push(newFilterRow());
+    function ensureFilterRow() {
+      if (has.filter && state.filterRows.length === 0) state.filterRows.push(newFilterRow());
     }
 
-    const rowById = (id) => state.filterRows.find((r) => r.id === Number(id));
+    const filterRowById = (id) => state.filterRows.find((r) => r.id === Number(id));
     const fid = (part, rowId) => `${idPrefix}-f${part}-${rowId}`;
+    const appliedFilters = () => state.filters.filter((f) => f.source === 'filter');
+    const filledFilterRows = () => state.filterRows.filter((r) => r.value.trim() !== '');
+
+    // A draft row is "applied" when the table is using exactly what it says
+    function isFilterRowApplied(r) {
+      const f = appliedFilters().find((x) => x.rowId === r.id);
+      return Boolean(f) && f.col === r.col && f.rel === r.rel && f.value === r.value.trim();
+    }
+
+    // True when the panel holds changes the table isn't using yet
+    function filterIsPending() {
+      const draft = filledFilterRows().map((r) => `${r.id}|${r.col}|${r.rel}|${r.value.trim()}`).join('\n');
+      const live = appliedFilters().map((f) => `${f.rowId}|${f.col}|${f.rel}|${f.value}`).join('\n');
+      return draft !== live;
+    }
 
     function renderFilterRows() {
       if (!has.filter) return;
       els.filterRows.innerHTML = state.filterRows
-        .map((r) => {
+        .map((r, i) => {
           const col = colOf(r.col);
-          const applied = r.filterId !== null;
-          const dis = applied ? 'disabled' : '';
           const invalid = r.error ? `aria-invalid="true" aria-describedby="${fid('err', r.id)}"` : '';
-          return `<div class="dt-frow${applied ? ' is-applied' : ''}" data-frow="${r.id}">
+          return `<div class="dt-frow${isFilterRowApplied(r) ? ' is-applied' : ''}" data-frow="${r.id}">
             <div class="dt-f-col">
-              <label class="field-label" for="${fid('col', r.id)}">Column</label>
-              <select id="${fid('col', r.id)}" data-field="col" ${dis}>
+              <label class="${labelClass(i)}" for="${fid('col', r.id)}">Column</label>
+              <select id="${fid('col', r.id)}" data-field="col">
                 ${searchable.map((c) => `<option value="${esc(c.key)}" ${c.key === r.col ? 'selected' : ''}>${esc(c.label)}</option>`).join('')}
               </select>
             </div>
             <div class="dt-f-rel">
-              <label class="field-label" for="${fid('rel', r.id)}">Relationship</label>
-              <select id="${fid('rel', r.id)}" data-field="rel" ${dis}>
+              <label class="${labelClass(i)}" for="${fid('rel', r.id)}">Relationship</label>
+              <select id="${fid('rel', r.id)}" data-field="rel">
                 ${RELATIONS[col.type].map(([v, l]) => `<option value="${v}" ${v === r.rel ? 'selected' : ''}>${l}</option>`).join('')}
               </select>
             </div>
             <div class="dt-f-val">
-              <label class="field-label" for="${fid('val', r.id)}">Value</label>
+              <label class="${labelClass(i)}" for="${fid('val', r.id)}">Value</label>
               <input id="${fid('val', r.id)}" data-field="value" type="${col.type === 'date' ? 'date' : 'text'}"
                 inputmode="${col.type === 'number' ? 'decimal' : 'text'}" placeholder="${esc(placeholderFor(col))}"
-                value="${esc(r.value)}" autocomplete="off" ${dis} ${invalid}>
+                value="${esc(r.value)}" autocomplete="off" ${invalid}>
             </div>
-            <div class="dt-f-actions">
-              <button type="button" class="btn btn-icon dt-f-add" data-action="add" ${dis}
-                aria-label="${applied ? 'Filter applied' : 'Apply filter'}" title="${applied ? 'Applied' : 'Apply filter'}">
-                ${applied ? ICONS.check : ICONS.plus}
-              </button>
-              <button type="button" class="btn btn-icon dt-f-bin" data-action="delete"
-                aria-label="${applied ? 'Remove filter' : 'Clear row'}" title="${applied ? 'Remove filter' : 'Clear row'}">
-                ${ICONS.bin}
-              </button>
-            </div>
+            ${rowButtons('filter')}
             ${r.error ? `<p class="field-error dt-f-error" id="${fid('err', r.id)}">${esc(r.error)}</p>` : ''}
           </div>`;
         })
         .join('');
     }
 
-    function focusBlankFilterRow() {
-      const blank = state.filterRows.find((r) => r.filterId === null);
-      if (blank) document.getElementById(fid('val', blank.id))?.focus();
-    }
+    // Validate every row; apply them all together, or apply nothing
+    function commitFilters() {
+      state.filterRows.forEach((r) => (r.error = ''));
+      const filled = filledFilterRows();
+      let firstBad = null;
 
-    function removeFilterRow(rowId) {
-      const row = rowById(rowId);
-      if (!row) return;
-      if (row.filterId !== null) state.filters = state.filters.filter((f) => f.id !== row.filterId);
-      // The last blank row is cleared rather than removed, so there is always one row to type into
-      const blanks = state.filterRows.filter((r) => r.filterId === null);
-      if (row.filterId === null && blanks.length === 1) Object.assign(row, newFilterRow(), { id: row.id });
-      else state.filterRows = state.filterRows.filter((r) => r.id !== row.id);
-      ensureEmptyRow();
+      filled.forEach((r) => {
+        const err = validateCondition(colOf(r.col), r.value.trim());
+        if (err) {
+          r.error = err;
+          firstBad ??= r;
+        }
+      });
+      // Pressing Filter on an empty panel with nothing applied: say what's missing
+      if (!filled.length && !appliedFilters().length) {
+        firstBad = state.filterRows[0];
+        firstBad.error = 'Enter a value.';
+      }
+      if (firstBad) {
+        renderFilterRows();
+        updatePending();
+        focusId(fid('val', firstBad.id));
+        return;
+      }
+
+      filled.forEach((r) => (r.value = r.value.trim()));
+      state.filters = state.filters
+        .filter((f) => f.source !== 'filter')
+        .concat(filled.map((r) => ({ id: nextFilterId++, rowId: r.id, col: r.col, rel: r.rel, value: r.value, source: 'filter' })));
+      // Blank rows have done their job; keep the filled ones (or one blank row to type into)
+      state.filterRows = filled;
+      ensureFilterRow();
+      render();
+      els.filterApply.focus();
     }
 
     function initFilter() {
       const container = els.filterRows;
 
-      // Keep typed values in state so re-rendering never loses them
+      // Keep typed values in state so redrawing never loses them
       container.addEventListener('input', (e) => {
         const rowEl = e.target.closest('[data-frow]');
-        const row = rowEl && rowById(rowEl.dataset.frow);
+        const row = rowEl && filterRowById(rowEl.dataset.frow);
         if (!row || e.target.dataset.field !== 'value') return;
         row.value = e.target.value;
-        if (row.error) {
-          row.error = '';
-          e.target.removeAttribute('aria-invalid');
-          e.target.removeAttribute('aria-describedby');
-          rowEl.querySelector('.dt-f-error')?.remove();
-        }
+        clearRowError(row, rowEl);
+        updatePending();
       });
 
       // Column change resets Relationship and Value to fit the new column's type
       container.addEventListener('change', (e) => {
         const rowEl = e.target.closest('[data-frow]');
-        const row = rowEl && rowById(rowEl.dataset.frow);
+        const row = rowEl && filterRowById(rowEl.dataset.frow);
         if (!row) return;
         if (e.target.dataset.field === 'col') {
-          row.col = e.target.value;
-          row.rel = RELATIONS[colOf(row.col).type][0][0];
-          row.value = '';
-          row.error = '';
+          Object.assign(row, { col: e.target.value, rel: RELATIONS[colOf(e.target.value).type][0][0], value: '', error: '' });
           renderFilterRows();
-          document.getElementById(fid('val', row.id))?.focus();
+          focusId(fid('val', row.id));
         } else if (e.target.dataset.field === 'rel') {
           row.rel = e.target.value;
         }
+        updatePending();
       });
 
-      // Enter in a value box acts like the + button
+      // Enter in a value box presses the Filter button
       container.addEventListener('keydown', (e) => {
         if (e.key !== 'Enter' || e.target.dataset.field !== 'value') return;
         e.preventDefault();
-        e.target.closest('[data-frow]').querySelector('[data-action="add"]').click();
+        commitFilters();
       });
 
       container.addEventListener('click', (e) => {
         const btn = e.target.closest('[data-action]');
         if (!btn) return;
-        const row = rowById(btn.closest('[data-frow]').dataset.frow);
+        const row = filterRowById(btn.closest('[data-frow]').dataset.frow);
+        const index = state.filterRows.indexOf(row);
 
         if (btn.dataset.action === 'add') {
-          const col = colOf(row.col);
-          const raw = row.value.trim();
-          const err = validateCondition(col, raw);
-          if (err) {
-            row.error = err;
-            renderFilterRows();
-            document.getElementById(fid('val', row.id))?.focus();
-            return;
-          }
-          const filter = { id: nextFilterId++, col: row.col, rel: row.rel, value: raw, source: 'filter' };
-          state.filters.push(filter);
-          Object.assign(row, { value: raw, filterId: filter.id, error: '' });
-          state.filterRows.push(newFilterRow()); // fresh row for the next condition
-          render();
-          focusBlankFilterRow();
+          const fresh = newFilterRow();
+          state.filterRows.splice(index + 1, 0, fresh); // new row goes right below this one
+          renderFilterRows();
+          updatePending();
+          focusId(fid('col', fresh.id));
         }
 
+        // Removing a row only changes the draft; the table updates when Filter is pressed
         if (btn.dataset.action === 'delete') {
-          removeFilterRow(row.id);
-          render();
-          focusBlankFilterRow();
+          state.filterRows.splice(index, 1);
+          ensureFilterRow();
+          renderFilterRows();
+          updatePending();
+          const next = state.filterRows[Math.min(index, state.filterRows.length - 1)];
+          focusId(fid('val', next.id));
         }
       });
 
-      ensureEmptyRow();
+      els.filterApply.addEventListener('click', commitFilters);
+      ensureFilterRow();
     }
 
-    /* ----- Sort builder rows ----- */
+    /* ----- Sort: draft levels, applied with the Sort button ----- */
 
-    function newSortRow() {
-      return { id: nextSortRowId++, col: sortable[0].key, dir: 'asc', applied: false, error: '' };
+    function newSortRow(col = '', dir = 'asc') {
+      return { id: nextRowId++, col, dir, error: '' };
     }
 
-    function ensureEmptySortRow() {
-      if (has.sort && !state.sortRows.some((r) => !r.applied)) state.sortRows.push(newSortRow());
+    function ensureSortRow() {
+      if (has.sort && state.sortRows.length === 0) state.sortRows.push(newSortRow());
     }
 
     const sortRowById = (id) => state.sortRows.find((r) => r.id === Number(id));
     const sid = (part, rowId) => `${idPrefix}-s${part}-${rowId}`;
+    const filledSortRows = () => state.sortRows.filter((r) => r.col);
+
+    function isSortRowApplied(r) {
+      const s = state.sorts.find((x) => x.rowId === r.id);
+      return Boolean(s) && s.col === r.col && s.dir === r.dir;
+    }
+
+    function sortIsPending() {
+      const draft = filledSortRows().map((r) => `${r.id}|${r.col}|${r.dir}`).join('\n');
+      const live = state.sorts.map((s) => `${s.rowId}|${s.col}|${s.dir}`).join('\n');
+      return draft !== live;
+    }
 
     function renderSortRows() {
       if (!has.sort) return;
-      let level = 0;
       els.sortRows.innerHTML = state.sortRows
-        .map((r) => {
-          const dis = r.applied ? 'disabled' : '';
-          // Applied rows read "Sort by", "Then by"…; the blank row says what it would become
-          const lead = r.applied ? (level++ === 0 ? 'Sort by' : 'Then by') : level === 0 ? 'Sort by' : 'Then by';
+        .map((r, i) => {
           const invalid = r.error ? `aria-invalid="true" aria-describedby="${sid('err', r.id)}"` : '';
-          return `<div class="dt-frow dt-srow${r.applied ? ' is-applied' : ''}" data-srow="${r.id}">
-            <span class="dt-s-lead">${lead}</span>
+          return `<div class="dt-frow dt-srow${isSortRowApplied(r) ? ' is-applied' : ''}" data-srow="${r.id}">
+            <span class="dt-s-lead">${i === 0 ? 'Sort by' : 'Then by'}</span>
             <div class="dt-s-col">
-              <label class="field-label" for="${sid('col', r.id)}">Column</label>
-              <select id="${sid('col', r.id)}" data-field="col" ${dis} ${invalid}>
+              <label class="${labelClass(i)}" for="${sid('col', r.id)}">Column</label>
+              <select id="${sid('col', r.id)}" data-field="col" ${invalid}>
+                <option value="" ${r.col ? '' : 'selected'}>Choose a column</option>
                 ${sortable.map((c) => `<option value="${esc(c.key)}" ${c.key === r.col ? 'selected' : ''}>${esc(c.label)}</option>`).join('')}
               </select>
             </div>
             <div class="dt-s-dir">
-              <label class="field-label" for="${sid('dir', r.id)}">Order</label>
-              <select id="${sid('dir', r.id)}" data-field="dir" ${dis}>
+              <label class="${labelClass(i)}" for="${sid('dir', r.id)}">Order</label>
+              <select id="${sid('dir', r.id)}" data-field="dir">
                 ${SORT_ORDERS.map(([v, l]) => `<option value="${v}" ${v === r.dir ? 'selected' : ''}>${l}</option>`).join('')}
               </select>
             </div>
-            <div class="dt-f-actions">
-              <button type="button" class="btn btn-icon dt-f-add" data-action="add" ${dis}
-                aria-label="${r.applied ? 'Sort applied' : 'Apply sort'}" title="${r.applied ? 'Applied' : 'Apply sort'}">
-                ${r.applied ? ICONS.check : ICONS.plus}
-              </button>
-              <button type="button" class="btn btn-icon dt-f-bin" data-action="delete"
-                aria-label="${r.applied ? 'Remove sort' : 'Clear row'}" title="${r.applied ? 'Remove sort' : 'Clear row'}">
-                ${ICONS.bin}
-              </button>
-            </div>
+            ${rowButtons('sort')}
             ${r.error ? `<p class="field-error dt-f-error" id="${sid('err', r.id)}">${esc(r.error)}</p>` : ''}
           </div>`;
         })
         .join('');
     }
 
-    function focusBlankSortRow() {
-      const blank = state.sortRows.find((r) => !r.applied);
-      if (blank) document.getElementById(sid('col', blank.id))?.focus();
-    }
+    function commitSorts() {
+      state.sortRows.forEach((r) => (r.error = ''));
+      const filled = filledSortRows();
+      const seen = new Set();
+      let firstBad = null;
 
-    function removeSortRow(rowId) {
-      const row = sortRowById(rowId);
-      if (!row) return;
-      const blanks = state.sortRows.filter((r) => !r.applied);
-      if (!row.applied && blanks.length === 1) Object.assign(row, newSortRow(), { id: row.id }); // keep one blank row
-      else state.sortRows = state.sortRows.filter((r) => r.id !== row.id);
-      ensureEmptySortRow();
+      // A column can only be sorted once; a second level on it would never break a tie
+      filled.forEach((r) => {
+        if (seen.has(r.col)) {
+          r.error = `${colOf(r.col).label} is already a sort level above. Pick another column or remove this row.`;
+          firstBad ??= r;
+        }
+        seen.add(r.col);
+      });
+      if (!filled.length && !state.sorts.length) {
+        firstBad = state.sortRows[0];
+        firstBad.error = 'Choose a column to sort by.';
+      }
+      if (firstBad) {
+        renderSortRows();
+        updatePending();
+        focusId(sid('col', firstBad.id));
+        return;
+      }
+
+      state.sorts = filled.map((r) => ({ rowId: r.id, col: r.col, dir: r.dir }));
+      state.sortRows = filled;
+      ensureSortRow();
+      render();
+      els.sortApply.focus();
     }
 
     function initSort() {
       els.sortRows.addEventListener('change', (e) => {
-        const row = sortRowById(e.target.closest('[data-srow]')?.dataset.srow);
+        const rowEl = e.target.closest('[data-srow]');
+        const row = rowEl && sortRowById(rowEl.dataset.srow);
         const field = e.target.dataset.field;
         if (!row || (field !== 'col' && field !== 'dir')) return;
         row[field] = e.target.value;
-        if (row.error) {
-          row.error = '';
-          renderSortRows();
-          document.getElementById(sid(field, row.id))?.focus();
-        }
+        clearRowError(row, rowEl);
+        updatePending();
       });
 
       els.sortRows.addEventListener('click', (e) => {
         const btn = e.target.closest('[data-action]');
         if (!btn) return;
         const row = sortRowById(btn.closest('[data-srow]').dataset.srow);
+        const index = state.sortRows.indexOf(row);
 
         if (btn.dataset.action === 'add') {
-          // A column can only be sorted once; a second level on it would never break a tie
-          if (sortRules().some((r) => r.col === row.col)) {
-            row.error = `Already sorting by ${colOf(row.col).label}. Pick another column, or remove that sort first.`;
-            renderSortRows();
-            document.getElementById(sid('col', row.id))?.focus();
-            return;
-          }
-          Object.assign(row, { applied: true, error: '' });
-          state.sortRows.push(newSortRow());
-          render();
-          focusBlankSortRow();
+          const fresh = newSortRow();
+          state.sortRows.splice(index + 1, 0, fresh);
+          renderSortRows();
+          updatePending();
+          focusId(sid('col', fresh.id));
         }
 
+        // Removing a level only changes the draft; the table updates when Sort is pressed
         if (btn.dataset.action === 'delete') {
-          removeSortRow(row.id);
-          render();
-          focusBlankSortRow();
+          state.sortRows.splice(index, 1);
+          ensureSortRow();
+          renderSortRows();
+          updatePending();
+          const next = state.sortRows[Math.min(index, state.sortRows.length - 1)];
+          focusId(sid('col', next.id));
         }
       });
 
-      // Header arrows: the quick way to sort by one column
+      els.sortApply.addEventListener('click', commitSorts);
+
+      // Header arrows: a quick sort that applies straight away.
+      // The Sort panel rows are updated to match, so the two never disagree.
       els.head.addEventListener('click', (e) => {
         const btn = e.target.closest('[data-sort-key]');
         if (!btn) return;
         const key = btn.dataset.sortKey;
-        const existing = sortRules().find((r) => r.col === key);
+        const existing = state.sorts.find((s) => s.col === key);
         if (existing) {
           existing.dir = existing.dir === 'asc' ? 'desc' : 'asc'; // already sorted: flip it, keep other levels
+          const row = state.sortRows.find((r) => r.id === existing.rowId);
+          if (row) row.dir = existing.dir;
         } else {
           // A header click on a new column replaces all sort levels with that one column
-          state.sortRows = [{ id: nextSortRowId++, col: key, dir: 'asc', applied: true, error: '' }];
-          ensureEmptySortRow();
+          const row = newSortRow(key, 'asc');
+          state.sortRows = [row];
+          state.sorts = [{ rowId: row.id, col: key, dir: 'asc' }];
         }
         render();
         els.head.querySelector(`[data-sort-key="${key}"]`)?.focus(); // the header was redrawn
       });
 
-      ensureEmptySortRow();
+      ensureSortRow();
     }
 
     /* ----- Columns (show / hide) ----- */
@@ -590,7 +648,7 @@
         if (e.target.checked) state.hiddenCols.delete(key);
         else state.hiddenCols.add(key);
         render();
-        document.getElementById(`${idPrefix}-colvis-${key}`)?.focus(); // keep focus in the list after it redraws
+        focusId(`${idPrefix}-colvis-${key}`); // keep focus in the list after it redraws
       });
       els.showAllCols?.addEventListener('click', () => {
         state.hiddenCols.clear();
@@ -599,12 +657,11 @@
       });
     }
 
-    /* ----- Tool buttons + side panel ----- */
+    /* ----- Tool buttons + panel ----- */
 
     function applyPanel() {
       const t = state.tool;
       els.side.hidden = !t;
-      els.workspace.classList.toggle('has-side', Boolean(t));
       els.tools.querySelectorAll('[data-tool]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tool === t)));
       root.querySelectorAll('[data-tool-panel]').forEach((p) => {
         p.hidden = p.dataset.toolPanel !== t;
@@ -643,16 +700,25 @@
 
     /* ----- Rendering ----- */
 
+    // "Changes not applied yet" notes beside the Filter and Sort buttons
+    function updatePending() {
+      const set = (pendingEl, applyBtn, on) => {
+        if (pendingEl) pendingEl.hidden = !on;
+        applyBtn?.classList.toggle('is-pending', on);
+      };
+      if (has.filter) set(els.filterPending, els.filterApply, filterIsPending());
+      if (has.sort) set(els.sortPending, els.sortApply, sortIsPending());
+    }
+
     function renderHead() {
-      const rules = sortRules();
       els.head.innerHTML =
         visibleColumns()
           .map((c) => {
             const cls = c.type === 'number' ? 'num' : '';
             if (!has.sort || c.sortable === false) return `<th scope="col" class="${cls}">${esc(c.label)}</th>`;
-            const i = rules.findIndex((r) => r.col === c.key);
-            const aria = i === -1 ? 'none' : rules[i].dir === 'asc' ? 'ascending' : 'descending';
-            const level = i !== -1 && rules.length > 1 ? `<span class="dt-priority" title="Sort level ${i + 1}">${i + 1}</span>` : '';
+            const i = state.sorts.findIndex((s) => s.col === c.key);
+            const aria = i === -1 ? 'none' : state.sorts[i].dir === 'asc' ? 'ascending' : 'descending';
+            const level = i !== -1 && state.sorts.length > 1 ? `<span class="dt-priority" title="Sort level ${i + 1}">${i + 1}</span>` : '';
             return `<th scope="col" class="${cls}" aria-sort="${aria}">
               <button type="button" class="dt-sort-btn" data-sort-key="${esc(c.key)}" title="Sort by ${esc(c.label)}">${esc(c.label)}${level}${ICONS.arrows}</button>
             </th>`;
@@ -668,7 +734,7 @@
       return `<tr>${cells}${actions}</tr>`;
     }
 
-    // Bottom chips. Each segment's × undoes that one thing.
+    // Bottom chips show what the table is using. Each segment's × undoes that one thing.
     function renderChips() {
       const segBtn = (attr, aria, k, v) =>
         `<button type="button" ${attr} aria-label="${esc(aria)}"><span class="k">${k}</span>${esc(v)}<span class="x" aria-hidden="true">×</span></button>`;
@@ -685,11 +751,11 @@
       });
 
       // Sort · Column · Order
-      const sortChips = sortRules().map((r) => {
-        const label = colOf(r.col).label;
-        const aria = `Remove sort: ${label} ${orderLabel(r.dir)}`;
-        const seg = (k, v) => segBtn(`data-remove-sort="${r.id}"`, aria, k, v);
-        return `<span class="dt-chip"><span class="dt-chip-tag is-sort">Sort</span>${seg('Column', label)}${seg('Order', orderLabel(r.dir))}</span>`;
+      const sortChips = state.sorts.map((s) => {
+        const label = colOf(s.col).label;
+        const aria = `Remove sort: ${label} ${orderLabel(s.dir)}`;
+        const seg = (k, v) => segBtn(`data-remove-sort="${s.rowId}"`, aria, k, v);
+        return `<span class="dt-chip"><span class="dt-chip-tag is-sort">Sort</span>${seg('Column', label)}${seg('Order', orderLabel(s.dir))}</span>`;
       });
 
       // Hidden · Column — × shows it again
@@ -706,7 +772,7 @@
         (total > 1 ? `<button type="button" class="dt-clear" data-clear>Clear all</button>` : '');
     }
 
-    // Counts on the tool buttons, so active tools show even with the panel closed
+    // Counts on the tool buttons reflect what is applied, so they show even with the panel closed
     function renderCounts() {
       const setCount = (el, n) => {
         if (!el) return;
@@ -714,8 +780,8 @@
         el.hidden = n === 0;
       };
       setCount(els.searchCount, state.filters.filter((f) => f.source === 'search').length);
-      setCount(els.filterCount, state.filters.filter((f) => f.source === 'filter').length);
-      setCount(els.sortCount, sortRules().length);
+      setCount(els.filterCount, appliedFilters().length);
+      setCount(els.sortCount, state.sorts.length);
     }
 
     function render() {
@@ -727,7 +793,7 @@
       if (!hasRows) {
         state.filters = [];
         state.filterRows = [];
-        ensureEmptyRow();
+        ensureFilterRow();
         if (state.tool) closePanel({ restoreFocus: false });
       }
       els.table.hidden = !hasRows;
@@ -739,8 +805,9 @@
       renderFilterRows();
       renderSortRows();
       renderColumnMenu();
+      updatePending();
 
-      const shown = applySort(applyFilters(state.rows));
+      const shown = sortAll(matchAll(state.rows));
       const colspan = visibleColumns().length + (options.actions ? 1 : 0);
       const n = state.filters.length;
       const which = n === 1 ? 'this condition' : 'these conditions';
@@ -754,35 +821,41 @@
       els.caption.textContent = n ? `${shown.length} of ${countLabel(total)}` : countLabel(total);
 
       // Screen-reader announcement; the caption, header arrows and chips already show this visually
-      const rules = sortRules();
       const parts = [];
       if (n) parts.push(`Showing ${shown.length} of ${countLabel(total)} matching ${n === 1 ? 'this condition' : `all ${n} conditions`}.`);
-      if (rules.length) parts.push(`Sorted by ${rules.map((r) => `${colOf(r.col).label} ${r.dir === 'asc' ? 'ascending' : 'descending'}`).join(', then ')}.`);
+      if (state.sorts.length) parts.push(`Sorted by ${state.sorts.map((s) => `${colOf(s.col).label} ${s.dir === 'asc' ? 'ascending' : 'descending'}`).join(', then ')}.`);
       els.status.textContent = parts.join(' ');
 
       renderChips();
       renderCounts();
     }
 
+    // Chips apply straight away, and take the matching panel row with them
     els.chips.addEventListener('click', (e) => {
       const rm = e.target.closest('[data-remove]');
       const rmSort = e.target.closest('[data-remove-sort]');
       const showCol = e.target.closest('[data-show-col]');
       if (rm) {
-        const id = Number(rm.dataset.remove);
-        const row = state.filterRows.find((r) => r.filterId === id);
-        if (row) removeFilterRow(row.id); // chip came from a filter row: remove that row too
-        else state.filters = state.filters.filter((f) => f.id !== id);
+        const f = state.filters.find((x) => x.id === Number(rm.dataset.remove));
+        state.filters = state.filters.filter((x) => x !== f);
+        if (f?.source === 'filter') {
+          state.filterRows = state.filterRows.filter((r) => r.id !== f.rowId);
+          ensureFilterRow();
+        }
       } else if (rmSort) {
-        removeSortRow(Number(rmSort.dataset.removeSort));
+        const rowId = Number(rmSort.dataset.removeSort);
+        state.sorts = state.sorts.filter((s) => s.rowId !== rowId);
+        state.sortRows = state.sortRows.filter((r) => r.id !== rowId);
+        ensureSortRow();
       } else if (showCol) {
         state.hiddenCols.delete(showCol.dataset.showCol);
       } else if (e.target.closest('[data-clear]')) {
         state.filters = [];
         state.filterRows = [];
-        ensureEmptyRow();
+        ensureFilterRow();
+        state.sorts = [];
         state.sortRows = [];
-        ensureEmptySortRow();
+        ensureSortRow();
         state.hiddenCols.clear();
       } else {
         return;

@@ -76,113 +76,104 @@
       -->
       <div class="data-table" id="question-data-table">
 
-        <!-- Tool buttons: each opens its panel to the right of the table -->
+        <!-- Tool buttons: each opens its panel below, above the table -->
         <div class="dt-toolbar" role="toolbar" aria-label="Table tools" data-dt="tools">
           <button type="button" class="btn dt-tool" data-tool="search" aria-pressed="false" aria-controls="question-dt-side">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-              stroke-linecap="round" aria-hidden="true">
-              <circle cx="11" cy="11" r="7" />
-              <path d="m20 20-4-4" />
-            </svg>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
             Search <span class="dt-count" data-dt="count-search" hidden></span>
           </button>
           <button type="button" class="btn dt-tool" data-tool="filter" aria-pressed="false" aria-controls="question-dt-side">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M3 5h18l-7 8.5V19l-4 2v-7.5z" />
-            </svg>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z" /></svg>
             Filter <span class="dt-count" data-dt="count-filter" hidden></span>
           </button>
           <button type="button" class="btn dt-tool" data-tool="sort" aria-pressed="false" aria-controls="question-dt-side">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4" />
-            </svg>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4" /></svg>
             Sort <span class="dt-count" data-dt="count-sort" hidden></span>
           </button>
           <button type="button" class="btn dt-tool" data-tool="columns" aria-pressed="false" aria-controls="question-dt-side">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" aria-hidden="true">
-              <rect x="3" y="4" width="18" height="16" rx="2" />
-              <path d="M9 4v16M15 4v16" />
-            </svg>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M9 4v16M15 4v16" /></svg>
             Columns <span class="dt-count dt-count-cols" data-dt="count-columns"></span>
           </button>
         </div>
 
-        <div class="dt-workspace" data-dt="workspace">
-          <div class="table-wrap">
-            <table class="question-table" data-dt="table" hidden>
-              <caption data-dt="caption"></caption>
-              <thead>
-                <tr data-dt="head"></tr>
-              </thead>
-              <tbody id="question-table-body" data-dt="body"></tbody>
-            </table>
-            <p class="empty-state" data-dt="empty" hidden>
-              No questions yet. Add one to start building this survey.
-            </p>
+        <!-- Tool panel: full width between the toolbar and the table -->
+        <section class="dt-side" id="question-dt-side" data-dt="side" aria-labelledby="question-dt-side-title" hidden>
+          <div class="dt-side-head">
+            <h4 id="question-dt-side-title" data-dt="side-title">Search</h4>
+            <button type="button" class="btn btn-icon" data-dt="close" aria-label="Close panel" title="Close">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+            </button>
           </div>
 
-          <aside class="dt-side" id="question-dt-side" data-dt="side" aria-labelledby="question-dt-side-title" hidden>
-            <div class="dt-side-head">
-              <h4 id="question-dt-side-title" data-dt="side-title">Search</h4>
-              <button type="button" class="btn btn-icon" data-dt="close" aria-label="Close panel" title="Close">
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-                  stroke-linecap="round" aria-hidden="true">
-                  <path d="M6 6l12 12M18 6 6 18" />
-                </svg>
+          <!-- Search: the Search button adds one condition -->
+          <div data-tool-panel="search" hidden>
+            <p class="field-hint">Find questions where one column matches a value. Every search must match.</p>
+            <form class="dt-search-form" data-dt="search-form" novalidate>
+              <div>
+                <label class="field-label" for="question-dt-col">Column</label>
+                <select id="question-dt-col" data-dt="search-col"></select>
+              </div>
+              <div>
+                <label class="field-label" for="question-dt-rel">Relationship</label>
+                <select id="question-dt-rel" data-dt="search-rel"></select>
+              </div>
+              <div class="field" data-dt="search-field">
+                <label class="field-label" for="question-dt-val">Value</label>
+                <input type="text" id="question-dt-val" data-dt="search-val" autocomplete="off" aria-describedby="question-dt-err" />
+              </div>
+              <button type="submit" class="btn dt-primary">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
+                Search
               </button>
-            </div>
+              <p class="field-error" id="question-dt-err" data-dt="search-error"></p>
+            </form>
+          </div>
 
-            <!-- Search -->
-            <div data-tool-panel="search" hidden>
-              <p class="field-hint">Find questions where one column matches a value. Every search must match.</p>
-              <form class="form" data-dt="search-form" novalidate>
-                <div>
-                  <label class="field-label" for="question-dt-col">Column</label>
-                  <select id="question-dt-col" data-dt="search-col"></select>
-                </div>
-                <div>
-                  <label class="field-label" for="question-dt-rel">Relationship</label>
-                  <select id="question-dt-rel" data-dt="search-rel"></select>
-                </div>
-                <div class="field" data-dt="search-field">
-                  <label class="field-label" for="question-dt-val">Value</label>
-                  <input type="text" id="question-dt-val" data-dt="search-val" autocomplete="off"
-                    aria-describedby="question-dt-err" />
-                  <p class="field-error" id="question-dt-err" data-dt="search-error"></p>
-                </div>
-                <button type="submit" class="btn dt-primary">
-                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
-                    stroke-linecap="round" aria-hidden="true">
-                    <circle cx="11" cy="11" r="7" />
-                    <path d="m20 20-4-4" />
-                  </svg>
-                  Search
-                </button>
-              </form>
+          <!-- Filters: + adds a row, the bin removes one. Nothing applies until Filter is pressed. -->
+          <div data-tool-panel="filter" hidden>
+            <p class="field-hint">Every filter must match. Use + to add more rows, then press Filter (or Enter).</p>
+            <div class="dt-filter-rows" data-dt="filter-rows"></div>
+            <div class="dt-panel-actions">
+              <button type="button" class="btn dt-primary" data-dt="filter-apply">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z" /></svg>
+                Filter
+              </button>
+              <p class="dt-pending" data-dt="filter-pending" hidden>Changes not applied yet.</p>
             </div>
+          </div>
 
-            <!-- Filters: + applies a row, the bin removes it -->
-            <div data-tool-panel="filter" hidden>
-              <p class="field-hint">Every filter must match. Press + (or Enter) to apply a row.</p>
-              <div class="dt-filter-rows" data-dt="filter-rows"></div>
+          <!-- Sorting: + adds a level, the bin removes one. Nothing applies until Sort is pressed. -->
+          <div data-tool-panel="sort" hidden>
+            <p class="field-hint">The first level sorts the table; later levels break ties. Press Sort to apply. Clicking a column header sorts straight away.</p>
+            <div class="dt-filter-rows" data-dt="sort-rows"></div>
+            <div class="dt-panel-actions">
+              <button type="button" class="btn dt-primary" data-dt="sort-apply">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4" /></svg>
+                Sort
+              </button>
+              <p class="dt-pending" data-dt="sort-pending" hidden>Changes not applied yet.</p>
             </div>
+          </div>
 
-            <!-- Sorting: + applies a level, the bin removes it. Header arrows also sort. -->
-            <div data-tool-panel="sort" hidden>
-              <p class="field-hint">The first level sorts the table; later levels break ties. You can also click a column header.</p>
-              <div class="dt-filter-rows" data-dt="sort-rows"></div>
-            </div>
+          <!-- Show / hide columns: applies as you tick -->
+          <div data-tool-panel="columns" hidden>
+            <p class="field-hint">Untick a column to hide it. At least one stays visible.</p>
+            <div class="dt-col-checks" data-dt="col-checks" role="group" aria-label="Show or hide columns"></div>
+            <button type="button" class="dt-clear" data-dt="show-all-cols" hidden>Show all</button>
+          </div>
+        </section>
 
-            <!-- Show / hide columns -->
-            <div data-tool-panel="columns" hidden>
-              <p class="field-hint">Untick a column to hide it. At least one stays visible.</p>
-              <div class="dt-col-checks" data-dt="col-checks" role="group" aria-label="Show or hide columns"></div>
-              <button type="button" class="dt-clear" data-dt="show-all-cols" hidden>Show all</button>
-            </div>
-          </aside>
+        <div class="table-wrap">
+          <table class="question-table" data-dt="table" hidden>
+            <caption data-dt="caption"></caption>
+            <thead>
+              <tr data-dt="head"></tr>
+            </thead>
+            <tbody id="question-table-body" data-dt="body"></tbody>
+          </table>
+          <p class="empty-state" data-dt="empty" hidden>
+            No questions yet. Add one to start building this survey.
+          </p>
         </div>
 
         <div class="dt-foot" data-dt="foot" hidden>

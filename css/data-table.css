@@ -1,6 +1,7 @@
 /* ---------------------------------------------------------------
    data-table.css — table tools shared by every admin table:
-   toolbar, side panel, chips, counts and the no-match row.
+   toolbar, tool panel, filter/sort rows, sortable headers,
+   chips, counts and the no-match row.
    Built on tokens.css, so it follows the purple/green/beige
    schemes, dark mode and the spacing slider automatically.
    Classes are prefixed dt- to avoid clashing with components.css
@@ -23,7 +24,6 @@
 .dt-toolbar {
   display: flex;
   flex-wrap: wrap;
-justify-content: center;
   gap: var(--space-2);
   margin-bottom: var(--space-3);
 }
@@ -60,23 +60,25 @@ justify-content: center;
   color: var(--accent-100);
 }
 
-/* Workspace: table on the left, open tool on the right ------------- */
-
-.dt-workspace {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-4);
-  align-items: start;
+/* The Columns button shows "3/4" as plain text, not an accent pill */
+.dt-count.dt-count-cols,
+.dt-tool[aria-pressed='true'] .dt-count.dt-count-cols {
+  background: none;
+  color: inherit;
+  border: 1px solid currentColor;
+  font-weight: 400;
 }
 
-.dt-workspace.has-side {
-  grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
-}
+/* Tool panel --------------------------------------------------------
+   Sits between the toolbar and the table at full width, so the table
+   keeps all its width however many columns it has. */
 
 .dt-side {
+  margin-bottom: var(--space-3);
   padding: var(--space-3);
   background: var(--panel);
   border: 1px solid var(--border);
+  border-top: 3px solid var(--accent-100);
   border-radius: var(--radius);
 }
 
@@ -85,25 +87,35 @@ justify-content: center;
   justify-content: space-between;
   align-items: center;
   gap: var(--space-2);
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-1);
 }
 
-.dt-side-head h3 {
+.dt-side-head h3,
+.dt-side-head h4 {
   margin: 0;
   font-size: 1rem;
 }
 
-.dt-side .form {
-  gap: var(--space-2);
+.dt-side .field-hint {
+  margin-bottom: var(--space-2);
 }
 
 .dt-side .field-label {
+  margin-bottom: 2px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ink-secondary);
+}
+
+.dt-side input,
+.dt-side select {
+  padding: var(--space-1) var(--space-2);
   font-size: 0.85rem;
 }
 
+/* Accent buttons: Search, Filter, Sort */
 .dt-primary {
   justify-content: center;
-  margin-top: var(--space-1);
   background: var(--accent-100);
   border-color: var(--accent-100);
   color: var(--dt-on-accent);
@@ -114,15 +126,197 @@ justify-content: center;
   border-color: var(--accent-80);
 }
 
-/* Narrow screens: the panel stacks above the table */
-@media (max-width: 760px) {
-  .dt-workspace.has-side {
-    grid-template-columns: minmax(0, 1fr);
+/* Search: one line — Column · Relationship · Value · Search */
+
+.dt-search-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.5fr) auto;
+  gap: var(--space-1) var(--space-2);
+  align-items: end;
+}
+
+.dt-search-form .field-error {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-weight: 600;
+}
+
+.dt-search-form [aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+/* Apply row under the Filter and Sort rows */
+
+.dt-panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.dt-pending {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--ink-secondary);
+}
+
+/* A dot on the button while the panel holds unapplied changes */
+.dt-primary.is-pending::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  margin-left: 2px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Filter and sort rows ------------------------------------------------
+   One line per row. Labels show on the first row only; applied rows
+   get an accent edge so you can see what the table is using. */
+
+.dt-filter-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.dt-frow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.5fr) auto;
+  grid-template-areas:
+    'col rel val actions'
+    'err err err err';
+  gap: 2px var(--space-2);
+  align-items: end;
+  padding: var(--space-1) var(--space-2);
+  background: var(--ground);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.dt-frow.is-applied {
+  border-left-color: var(--accent-100);
+}
+
+.dt-f-col { grid-area: col; min-width: 0; }
+.dt-f-rel { grid-area: rel; min-width: 0; }
+.dt-f-val { grid-area: val; min-width: 0; }
+
+.dt-f-actions {
+  grid-area: actions;
+  display: flex;
+  gap: var(--space-1);
+}
+
+.dt-frow [aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.dt-f-error {
+  grid-area: err;
+  margin: 0;
+}
+
+.dt-f-add,
+.dt-f-bin {
+  padding: var(--space-1) var(--space-2);
+  line-height: 1;
+}
+
+.dt-f-add:hover:not(:disabled) {
+  border-color: var(--accent-60);
+  color: var(--accent-100);
+}
+
+.dt-f-bin:hover:not(:disabled) {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* Sort rows: "Sort by / Then by" · Column · Order · buttons */
+
+.dt-srow {
+  grid-template-columns: 5.5rem minmax(0, 1fr) minmax(0, 1fr) auto;
+  grid-template-areas:
+    'lead col dir actions'
+    'err err err err';
+}
+
+.dt-s-lead {
+  grid-area: lead;
+  display: flex;
+  align-items: center;
+  min-height: 2rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-secondary);
+}
+
+.dt-s-col { grid-area: col; min-width: 0; }
+.dt-s-dir { grid-area: dir; min-width: 0; }
+
+/* Narrow screens: rows wrap onto two lines */
+@media (max-width: 640px) {
+  .dt-search-form {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 
-  .dt-side {
-    order: -1;
+  .dt-search-form .dt-primary,
+  .dt-search-form .field {
+    grid-column: 1 / -1;
   }
+
+  .dt-frow {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+    grid-template-areas:
+      'col rel rel'
+      'val val actions'
+      'err err err';
+  }
+
+  .dt-srow {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+    grid-template-areas:
+      'lead lead lead'
+      'col dir actions'
+      'err err err';
+  }
+}
+
+/* Columns panel ------------------------------------------------------ */
+
+.dt-col-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.dt-col-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  font-size: 0.9rem;
+  background: var(--ground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.dt-col-check input {
+  width: auto;
+  margin: 0;
+  accent-color: var(--accent-100);
+}
+
+.dt-col-check.is-locked {
+  color: var(--ink-secondary);
+  cursor: default;
 }
 
 /* Cells ------------------------------------------------------------- */
@@ -142,121 +336,6 @@ justify-content: center;
   padding: var(--space-5) var(--space-3);
   text-align: center;
   color: var(--ink-secondary);
-}
-
-/* Filter builder rows ------------------------------------------------
-   Card per row: Column and Relationship on top, Value with the
-   + / bin buttons underneath. Applied rows lock and get an accent edge. */
-
-.dt-filter-rows {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.dt-frow {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
-  grid-template-areas:
-    'col rel rel'
-    'val val actions'
-    'err err err';
-  gap: var(--space-1) var(--space-2);
-  padding: var(--space-2);
-  background: var(--ground);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--border);
-  border-radius: var(--radius);
-}
-
-.dt-frow.is-applied {
-  border-left-color: var(--accent-100);
-}
-
-.dt-f-col { grid-area: col; min-width: 0; }
-.dt-f-rel { grid-area: rel; min-width: 0; }
-.dt-f-val { grid-area: val; min-width: 0; }
-
-.dt-f-actions {
-  grid-area: actions;
-  display: flex;
-  align-items: flex-end;
-  gap: var(--space-1);
-}
-
-.dt-frow .field-label {
-  margin-bottom: 2px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--ink-secondary);
-}
-
-.dt-frow input,
-.dt-frow select {
-  padding: var(--space-1) var(--space-2);
-  font-size: 0.85rem;
-}
-
-.dt-frow input:disabled,
-.dt-frow select:disabled {
-  color: var(--ink-secondary);
-  background: var(--panel);
-  opacity: 1;
-}
-
-.dt-frow input[aria-invalid='true'] {
-  border-color: var(--danger);
-}
-
-.dt-f-error {
-  grid-area: err;
-  margin: 0;
-}
-
-.dt-f-add,
-.dt-f-bin {
-  padding: var(--space-1) var(--space-2);
-  line-height: 1;
-}
-
-.dt-f-add:hover:not(:disabled) {
-  border-color: var(--accent-60);
-}
-
-.dt-frow.is-applied .dt-f-add {
-  background: var(--accent-100);
-  border-color: var(--accent-100);
-  color: var(--dt-on-accent);
-}
-
-.dt-f-bin:hover:not(:disabled) {
-  border-color: var(--danger);
-  color: var(--danger);
-}
-
-/* Sort builder rows: same card as filter rows, with a "Sort by / Then by" lead */
-
-.dt-srow {
-  grid-template-areas:
-    'lead lead lead'
-    'col dir actions'
-    'err err err';
-}
-
-.dt-s-lead {
-  grid-area: lead;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--ink-secondary);
-}
-
-.dt-s-col { grid-area: col; min-width: 0; }
-.dt-s-dir { grid-area: dir; min-width: 0; }
-
-.dt-frow select[aria-invalid='true'] {
-  border-color: var(--danger);
 }
 
 /* Sortable headers -------------------------------------------------
@@ -315,46 +394,6 @@ th[aria-sort='descending'] .dt-arrows .down {
   border-radius: 999px;
 }
 
-/* Columns panel ------------------------------------------------------ */
-
-.dt-col-checks {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  margin-bottom: var(--space-2);
-}
-
-.dt-col-check {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-2);
-  font-size: 0.9rem;
-  background: var(--ground);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  cursor: pointer;
-}
-
-.dt-col-check input {
-  width: auto;
-  margin: 0;
-  accent-color: var(--accent-100);
-}
-
-.dt-col-check.is-locked {
-  color: var(--ink-secondary);
-  cursor: default;
-}
-
-/* The Columns button shows "3/4" as plain text, not an accent pill */
-.dt-count.dt-count-cols {
-  background: none;
-  color: inherit;
-  border: 1px solid currentColor;
-  font-weight: 400;
-}
-
 /* Footer: chips ------------------------------------------------------ */
 
 .dt-foot {
@@ -391,7 +430,7 @@ th[aria-sort='descending'] .dt-arrows .down {
   color: var(--dt-on-accent);
 }
 
-/* Filter chips use a softer shade than Search, so the two sources are easy to tell apart */
+/* Each source gets its own shade, so chips are easy to tell apart */
 .dt-chip-tag.is-filter {
   background: var(--accent-60);
 }
