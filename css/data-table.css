@@ -448,38 +448,43 @@ th[aria-sort='descending'] .dt-arrows .down {
   background: var(--accent-20);
 }
 
-.dt-chip button {
-  display: inline-flex;
+/* Chip text reads as one phrase: Name contains r */
+.dt-chip-text {
+  display: flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: 0.4em;
+  padding: 2px var(--space-2);
+  color: var(--ink);
+}
+
+.dt-chip-rel {
+  color: var(--ink-secondary);
+}
+
+.dt-chip-text strong {
+  font-weight: 600;
+}
+
+/* One × per chip, at the end */
+.dt-chip-x {
+  display: flex;
+  align-items: center;
   padding: 2px var(--space-2);
   font: inherit;
-  color: var(--ink);
+  color: var(--ink-muted);
   background: transparent;
   border: 0;
   border-left: 1px solid var(--border);
 }
 
-.dt-chip button:hover {
-  background: color-mix(in srgb, var(--accent-60) 14%, var(--ground));
+.dt-chip-x:hover {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 10%, var(--ground));
 }
 
-.dt-chip button:focus-visible {
+.dt-chip-x:focus-visible {
   outline: 2px solid var(--accent-40);
   outline-offset: -2px;
-}
-
-.dt-chip .k {
-  font-size: 0.75rem;
-  color: var(--ink-muted);
-}
-
-.dt-chip .x {
-  color: var(--ink-muted);
-}
-
-.dt-chip button:hover .x {
-  color: var(--danger);
 }
 
 .dt-clear {

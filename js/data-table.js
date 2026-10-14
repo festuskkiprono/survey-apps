@@ -734,37 +734,45 @@
       return `<tr>${cells}${actions}</tr>`;
     }
 
-    // Bottom chips show what the table is using. Each segment's × undoes that one thing.
+     // Chips show what the table is using, as one short phrase: [Filter] Name contains r  ×
+    // The single × at the end removes the whole chip.
     function renderChips() {
-      const segBtn = (attr, aria, k, v) =>
-        `<button type="button" ${attr} aria-label="${esc(aria)}"><span class="k">${k}</span>${esc(v)}<span class="x" aria-hidden="true">×</span></button>`;
+      const chip = (tag, cls, text, attr, aria) =>
+        `<span class="dt-chip"><span class="dt-chip-tag ${cls}">${tag}</span><span class="dt-chip-text">${text}</span>` +
+        `<button type="button" class="dt-chip-x" ${attr} aria-label="${esc(aria)}" title="Remove"><span aria-hidden="true">×</span></button></span>`;
 
-      // Search | Filter · Column · Relationship · Value
+      // [Search | Filter] Name contains r
       const conditionChips = state.filters.map((f) => {
         const col = colOf(f.col);
         const rel = relLabel(col, f.rel);
         const val = shownValue(col, f.value);
         const source = SOURCE_LABELS[f.source];
-        const aria = `Remove ${source.toLowerCase()}: ${col.label} ${rel} ${val}`;
-        const seg = (k, v) => segBtn(`data-remove="${f.id}"`, aria, k, v);
-        return `<span class="dt-chip"><span class="dt-chip-tag is-${f.source}" title="From ${source}">${source}</span>${seg('Column', col.label)}${seg('Relationship', rel)}${seg('Value', val)}</span>`;
+        return chip(
+          source,
+          `is-${f.source}`,
+          `${esc(col.label)} <span class="dt-chip-rel">${esc(rel)}</span> <strong>${esc(val)}</strong>`,
+          `data-remove="${f.id}"`,
+          `Remove ${source.toLowerCase()}: ${col.label} ${rel} ${val}`
+        );
       });
 
-      // Sort · Column · Order
+      // [Sort] Name ascending
       const sortChips = state.sorts.map((s) => {
         const label = colOf(s.col).label;
-        const aria = `Remove sort: ${label} ${orderLabel(s.dir)}`;
-        const seg = (k, v) => segBtn(`data-remove-sort="${s.rowId}"`, aria, k, v);
-        return `<span class="dt-chip"><span class="dt-chip-tag is-sort">Sort</span>${seg('Column', label)}${seg('Order', orderLabel(s.dir))}</span>`;
+        const order = orderLabel(s.dir).toLowerCase();
+        return chip(
+          'Sort',
+          'is-sort',
+          `${esc(label)} <span class="dt-chip-rel">${order}</span>`,
+          `data-remove-sort="${s.rowId}"`,
+          `Remove sort: ${label} ${order}`
+        );
       });
 
-      // Hidden · Column — × shows it again
+      // [Hidden] Description — × shows it again
       const hiddenChips = columns
         .filter((c) => state.hiddenCols.has(c.key))
-        .map(
-          (c) =>
-            `<span class="dt-chip"><span class="dt-chip-tag is-hidden">Hidden</span>${segBtn(`data-show-col="${esc(c.key)}"`, `Show column ${c.label}`, 'Column', c.label)}</span>`
-        );
+        .map((c) => chip('Hidden', 'is-hidden', esc(c.label), `data-show-col="${esc(c.key)}"`, `Show column ${c.label}`));
 
       const total = conditionChips.length + sortChips.length + hiddenChips.length;
       els.chips.innerHTML =
