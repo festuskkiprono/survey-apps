@@ -145,7 +145,13 @@
             <button type="button" class="dt-clear" data-dt="show-all-cols" hidden>Show all</button>
           </div>
         </section>
-
+        
+         <!-- What the table is using right now: sits above the table so it can be cleared without scrolling -->
+        <div class="dt-foot" data-dt="foot" hidden>
+          <p class="visually-hidden" data-dt="status" aria-live="polite"></p>
+          <div class="dt-chips" data-dt="chips"></div>
+        </div>
+        
         <div class="table-wrap">
           <table class="survey-table" data-dt="table" hidden>
             <caption data-dt="caption"></caption>
@@ -159,10 +165,7 @@
           </p>
         </div>
 
-        <div class="dt-foot" data-dt="foot" hidden>
-          <p class="visually-hidden" data-dt="status" aria-live="polite"></p>
-          <div class="dt-chips" data-dt="chips"></div>
-        </div>
+        
       </div>
     </section>
   </main>

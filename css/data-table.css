@@ -397,7 +397,12 @@ th[aria-sort='descending'] .dt-arrows .down {
 /* Footer: chips ------------------------------------------------------ */
 
 .dt-foot {
-  margin-top: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+/* No chips yet: take no space */
+.dt-foot:has(.dt-chips:empty) {
+  margin-bottom: 0;
 }
 
 .dt-chips {
